@@ -1,9 +1,12 @@
 package com.eungu.lineplusnote.MemoList;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,7 +19,6 @@ import com.eungu.lineplusnote.MemoList.ListMaker.MemoListItem;
 import com.eungu.lineplusnote.R;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +27,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Toolbar tb = (Toolbar) findViewById(R.id.main_toolbar) ;
+        setSupportActionBar(tb) ;
+
+        setList();
+
+        Button b = findViewById(R.id.temp_button);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(getApplicationContext(), AddMemoActivity.class);
+                i.putExtra("ADD", true);
+                startActivityForResult(i, 1);
+            }
+        });
+    }
+
+    private void setList(){
         final DBManager dbManager = new DBManager(this);
         ArrayList<MemoListItem> list = new ArrayList<>();
         MemoListAdapter listAdapter = new MemoListAdapter(this, list);
@@ -36,16 +55,17 @@ public class MainActivity extends AppCompatActivity {
             MemoListItem item = new MemoListItem();
             DBData dbData = dbManager.getData(i);
             item.setTitle(dbData.getTitle());
+            item.setContent(dbData.getContent());
             list.add(item);
         }
-
-        Button b = findViewById(R.id.temp_button);
-        b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                DBData d = new DBData(Calendar.getInstance(), "title", "content");
-                dbManager.addData(d);
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 1){
+            if(resultCode == RESULT_OK){
+                setList();
             }
-        });
+        }
     }
 }
