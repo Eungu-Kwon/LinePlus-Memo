@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -23,15 +24,19 @@ import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
 import com.eungu.lineplusnote.R;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class AddMemoActivity extends AppCompatActivity {
     EditText title_edit = null;
     EditText content_edit = null;
+    Button select_image_button = null;
 
     private int dbIdx;
 
     private boolean isModified = false, isSaved = false;
+    private boolean isReadOnly;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,14 +48,13 @@ public class AddMemoActivity extends AppCompatActivity {
         title_edit.addTextChangedListener(watcher);
         content_edit = findViewById(R.id.edit_content);
         content_edit.addTextChangedListener(watcher);
+        select_image_button = findViewById(R.id.edit_add_image);
 
         if(dbIdx != -1){
-            DBManager dbManager = new DBManager(this);
-            DBData data = dbManager.getData(dbIdx);
-
-            title_edit.setText(data.getTitle());
-            content_edit.setText(data.getContent());
+            inputEditData();
+            isReadOnly = true;
         }
+        else { isReadOnly = false; }
 
         isModified = false;
         setToolbar();
@@ -66,29 +70,59 @@ public class AddMemoActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                hideKeyboard();
-                if(isModified)
-                    saveMemo(true);
-                else if(isSaved)
-                    setResult(RESULT_OK);
-                else {
-                    showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
-                    setResult(RESULT_CANCELED);
-                }
-                finish();
+                onBackPressed();
             }
         });
+    }
+
+    private void exitActivity(){
+        if(isSaved) { setResult(RESULT_OK); }
+        else {
+            showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
+            setResult(RESULT_CANCELED);
+        }
+        finish();
+    }
+
+    private void makeDialog(){
+        hideKeyboard();
+        final CharSequence[] items =  {"저장하고 나가기", "저장하지 않고 나가기", "취소"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+                .setTitle("메모를 저장하시겠습니까?")
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int pos) {
+                        switch (pos){
+                            case 0:
+                                saveMemo(true);
+                                break;
+                            case 1:
+                                setResult(RESULT_CANCELED);
+                                finish();
+                                break;
+                        }
+                    }
+                }).setCancelable(false);
+        builder.show();
     }
 
     private void saveMemo(boolean close){
         if(title_edit.getText().toString().equals("")){
             showToast("제목이 비어있어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
-            if(close) setResult(RESULT_CANCELED);
+            if(dbIdx != -1) inputEditData();
+            if(close) {
+                setResult(RESULT_CANCELED);
+                finish();
+            }
             return;
         }
         if(content_edit.getText().toString().equals("")){
             showToast("내용이 비어있어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
-            if(close) setResult(RESULT_CANCELED);
+            if(dbIdx != -1) inputEditData();
+            if(close) {
+                setResult(RESULT_CANCELED);
+                finish();
+            }
             return;
         }
         isModified = false;
@@ -120,9 +154,20 @@ public class AddMemoActivity extends AppCompatActivity {
         t.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, t.getYOffset());
         t.show();
     }
+
+    MenuItem edit_menu, save_menu;
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.add_appbar_action, menu) ;
+        getMenuInflater().inflate(R.menu.add_appbar_action, menu);
+        edit_menu = menu.findItem(R.id.m_edit_memo);
+        save_menu = menu.findItem(R.id.m_save_memo);
+
+        if(dbIdx == -1){        // when adding memo
+            changeToWritableMode();
+        }
+        else{                   //when seeing memo
+            changeToReadOnlyMode();
+        }
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -130,12 +175,16 @@ public class AddMemoActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         hideKeyboard();
         switch (item.getItemId()) {
+            case R.id.m_edit_memo :
+                changeToWritableMode();
+                return true;
             case R.id.m_save_memo :
                 if(isModified) {
                     saveMemo(false);
                 }
                 else
                     showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
+                changeToReadOnlyMode();
                 return true ;
             case R.id.m_delete_memo :
                 AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
@@ -148,8 +197,8 @@ public class AddMemoActivity extends AppCompatActivity {
                                     DBManager dbManager = new DBManager(getApplicationContext());
                                     dbManager.deleteColumn(dbIdx);
                                     setResult(RESULT_OK);
-                                    showToast("메모를 삭제하였습니다.", Toast.LENGTH_SHORT);
                                 }
+                                showToast("메모를 삭제하였습니다.", Toast.LENGTH_SHORT);
                                 finish();
                             }
                         })
@@ -160,6 +209,38 @@ public class AddMemoActivity extends AppCompatActivity {
             default :
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void changeToReadOnlyMode(){
+        hideKeyboard();
+        edit_menu.setVisible(true);
+        save_menu.setVisible(false);
+        title_edit.setFocusable(false);
+        content_edit.setFocusable(false);
+        select_image_button.setVisibility(View.GONE);
+        isReadOnly = true;
+    }
+
+    private void changeToWritableMode(){
+        title_edit.setFocusableInTouchMode(true);
+        content_edit.setFocusableInTouchMode(true);
+        title_edit.setFocusable(true);
+        content_edit.setFocusable(true);
+        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        title_edit.requestFocus();
+        imm.showSoftInput(title_edit, InputMethodManager.SHOW_IMPLICIT);
+        select_image_button.setVisibility(View.VISIBLE);
+        edit_menu.setVisible(false);
+        save_menu.setVisible(true);
+        isReadOnly = false;
+    }
+
+    private void inputEditData(){
+        DBManager dbManager = new DBManager(this);
+        DBData data = dbManager.getData(dbIdx);
+
+        title_edit.setText(data.getTitle());
+        content_edit.setText(data.getContent());
     }
 
     TextWatcher watcher = new TextWatcher() {
@@ -178,4 +259,32 @@ public class AddMemoActivity extends AppCompatActivity {
 
         }
     };
+
+    @Override
+    public void onBackPressed() {
+        if(dbIdx == -1) {
+            if (isModified)
+                saveMemo(true);
+            else {
+                exitActivity();
+            }
+        }
+        else {
+            if(isModified){
+                if(title_edit.getText().toString().equals("") || content_edit.getText().toString().equals("")){
+                    showToast("제목과 내용을 확인해주세요.", Toast.LENGTH_SHORT);
+                }
+                else {
+                    makeDialog();
+                }
+            }
+            else {
+                if(!isReadOnly)
+                    changeToReadOnlyMode();
+                else {
+                    exitActivity();
+                }
+            }
+        }
+    }
 }
