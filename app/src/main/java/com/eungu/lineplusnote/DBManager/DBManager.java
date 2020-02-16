@@ -22,6 +22,7 @@ public class DBManager {
         values.put(DBData.MEMO_DATE, item.getTimeToText());
 
         db.insert(DBData.MEMO_TABLE, null, values);
+        computeID(db);
         db.close();
     }
 
@@ -47,13 +48,13 @@ public class DBManager {
         values.put(DBData.MEMO_DATE, item.getTimeToText());
 
         int ret = db.update(DBData.MEMO_TABLE, values, "_ID="+(id+1), null);
+        computeID(db);
         db.close();
         return ret;
     }
 
     // sort index
-    public void computeID(){
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+    public void computeID(SQLiteDatabase db){
         Cursor cursor = db.rawQuery("SELECT * FROM " + DBData.MEMO_TABLE, null);
 
         if(cursor.moveToFirst() == false) {
@@ -62,7 +63,7 @@ public class DBManager {
         }
         int idx = 1;
         do{
-            db.execSQL("UPDATE ALARM_TABLE SET _ID = " + idx + " WHERE _ID = " + cursor.getInt(cursor.getColumnIndex("_ID")) + ";");
+            db.execSQL("UPDATE " + DBData.MEMO_TABLE + " SET _ID = " + idx + " WHERE _ID = " + cursor.getInt(cursor.getColumnIndex("_ID")) + ";");
             idx+=1;
         }while (cursor.moveToNext());
         db.close();
@@ -71,7 +72,7 @@ public class DBManager {
     public boolean deleteColumn(long id){
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         int ret = db.delete(DBData.MEMO_TABLE, "_id="+(id+1), null);
-
+        computeID(db);
         db.close();
         return ret > 0;
     }

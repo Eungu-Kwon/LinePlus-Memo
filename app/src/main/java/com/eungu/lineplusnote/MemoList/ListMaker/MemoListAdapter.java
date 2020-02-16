@@ -1,6 +1,8 @@
 package com.eungu.lineplusnote.MemoList.ListMaker;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
+import com.eungu.lineplusnote.MemoList.AddMemoActivity;
+import com.eungu.lineplusnote.MemoList.MainActivity;
 import com.eungu.lineplusnote.R;
 
 import java.util.ArrayList;
@@ -31,7 +35,10 @@ public class MemoListAdapter extends RecyclerView.Adapter<MemoListAdapter.ViewHo
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
+                    Intent intent = new Intent(v.getContext(), AddMemoActivity.class);
+                    intent.putExtra("ADD", false);
+                    intent.putExtra("idx", getAdapterPosition());
+                    ((Activity)v.getContext()).startActivityForResult(intent, MainActivity.ADD_REQUEST_CODE);
                 }
             });
         }
