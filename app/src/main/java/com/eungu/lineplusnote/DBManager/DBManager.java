@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import java.util.Calendar;
 
@@ -76,7 +77,7 @@ public class DBManager {
     }
 
     public int getItemsCount() {
-        String countQuery = "SELECT  * FROM " + DBData.MEMO_TABLE;
+        String countQuery = "SELECT * FROM " + DBData.MEMO_TABLE;
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.rawQuery(countQuery, null);
         int ret = cursor.getCount();
