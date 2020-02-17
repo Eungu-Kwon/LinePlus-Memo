@@ -8,16 +8,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
-import com.eungu.lineplusnote.MemoList.ListMaker.MemoListAdapter;
-import com.eungu.lineplusnote.MemoList.ListMaker.MemoListItem;
+import com.eungu.lineplusnote.MemoList.MainListMaker.MemoListAdapter;
+import com.eungu.lineplusnote.MemoList.MainListMaker.MemoListItem;
 import com.eungu.lineplusnote.R;
 
 import java.util.ArrayList;

@@ -1,6 +1,4 @@
-package com.eungu.lineplusnote.MemoList.ListMaker;
-
-import java.util.Calendar;
+package com.eungu.lineplusnote.MemoList.MainListMaker;
 
 public class MemoListItem {
     private String Title;

@@ -19,11 +19,16 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
+import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
+import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListItem;
 import com.eungu.lineplusnote.R;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class AddMemoActivity extends AppCompatActivity {
@@ -31,10 +36,13 @@ public class AddMemoActivity extends AppCompatActivity {
     EditText content_edit = null;
     Button select_image_button = null;
 
+    MenuItem edit_menu, save_menu;
+
     private int dbIdx;
 
     private boolean isModified = false, isSaved = false;
     private boolean isReadOnly;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,6 +64,7 @@ public class AddMemoActivity extends AppCompatActivity {
 
         isModified = false;
         setToolbar();
+        setImageList();
     }
 
     private void setToolbar(){
@@ -73,11 +82,17 @@ public class AddMemoActivity extends AppCompatActivity {
         });
     }
 
-    private void makeBackDialog(){
-
+    private void setImageList(){
+        RecyclerView imageList = findViewById(R.id.image_list);
+        ArrayList<ImageListItem> al = new ArrayList<ImageListItem>();
+        al.add(new ImageListItem());
+        al.add(new ImageListItem());
+        al.add(new ImageListItem());
+        ImageListAdapter imageListAdapter = new ImageListAdapter(this, al);
+        imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        imageList.setAdapter(imageListAdapter);
     }
 
-    MenuItem edit_menu, save_menu;
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.add_appbar_action, menu);

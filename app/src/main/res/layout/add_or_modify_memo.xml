@@ -36,6 +36,12 @@
         android:hint="내용을 입력하세요."
         android:inputType="textMultiLine" />
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/image_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
