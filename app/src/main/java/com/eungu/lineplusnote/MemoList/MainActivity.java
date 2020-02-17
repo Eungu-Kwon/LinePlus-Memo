@@ -61,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
     private void setList(){
         final DBManager dbManager = new DBManager(this);
         list.clear();
-        Log.d("mTag", dbManager.getItemsCount() + "");
         for(int i = 0; i < dbManager.getItemsCount(); i++){
             MemoListItem item = new MemoListItem();
             DBData dbData = dbManager.getData(i);

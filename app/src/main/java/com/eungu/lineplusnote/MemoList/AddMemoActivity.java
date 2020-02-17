@@ -24,9 +24,7 @@ import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
 import com.eungu.lineplusnote.R;
 
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 public class AddMemoActivity extends AppCompatActivity {
     EditText title_edit = null;
@@ -75,84 +73,8 @@ public class AddMemoActivity extends AppCompatActivity {
         });
     }
 
-    private void exitActivity(){
-        if(isSaved) { setResult(RESULT_OK); }
-        else {
-            showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
-            setResult(RESULT_CANCELED);
-        }
-        finish();
-    }
+    private void makeBackDialog(){
 
-    private void makeDialog(){
-        hideKeyboard();
-        final CharSequence[] items =  {"저장하고 나가기", "저장하지 않고 나가기", "취소"};
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
-                .setTitle("메모를 저장하시겠습니까?")
-                .setItems(items, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int pos) {
-                        switch (pos){
-                            case 0:
-                                saveMemo(true);
-                                break;
-                            case 1:
-                                setResult(RESULT_CANCELED);
-                                finish();
-                                break;
-                        }
-                    }
-                }).setCancelable(false);
-        builder.show();
-    }
-
-    private void saveMemo(boolean close){
-        if(title_edit.getText().toString().equals("")){
-            showToast("제목이 비어있어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
-            if(dbIdx != -1) inputEditData();
-            if(close) {
-                setResult(RESULT_CANCELED);
-                finish();
-            }
-            return;
-        }
-        if(content_edit.getText().toString().equals("")){
-            showToast("내용이 비어있어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
-            if(dbIdx != -1) inputEditData();
-            if(close) {
-                setResult(RESULT_CANCELED);
-                finish();
-            }
-            return;
-        }
-        isModified = false;
-        isSaved = true;
-        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString());
-        DBManager dbManager = new DBManager(getApplicationContext());
-        if(dbIdx == -1) {
-            dbManager.addData(data);
-        }
-        else{
-            dbManager.updateData(data, dbIdx);
-        }
-        showToast("메모를 저장하였습니다.", Toast.LENGTH_SHORT);
-        if(close) {
-            setResult(RESULT_OK);
-            finish();
-        }
-    }
-
-    private void hideKeyboard(){
-        if(getCurrentFocus() != null) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-        }
-    }
-
-    private void showToast(String str, int duration){
-        Toast t = Toast.makeText(getApplicationContext(), str, duration);
-        t.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, t.getYOffset());
-        t.show();
     }
 
     MenuItem edit_menu, save_menu;
@@ -180,11 +102,18 @@ public class AddMemoActivity extends AppCompatActivity {
                 return true;
             case R.id.m_save_memo :
                 if(isModified) {
-                    saveMemo(false);
+                    if(checkCanSave() == 0){
+                        saveMemo();
+                        changeToReadOnlyMode();
+                    }
+                    else{
+                        showToast("제목과 내용을 확인해주세요.", Toast.LENGTH_SHORT);
+                    }
                 }
-                else
+                else {
                     showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
-                changeToReadOnlyMode();
+                    changeToReadOnlyMode();
+                }
                 return true ;
             case R.id.m_delete_memo :
                 AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
@@ -243,6 +172,12 @@ public class AddMemoActivity extends AppCompatActivity {
         content_edit.setText(data.getContent());
     }
 
+    private int checkCanSave(){
+        if(title_edit.getText().toString().equals("")) return 1;
+        else if(content_edit.getText().toString().equals("")) return 2;
+        else return 0;
+    }
+
     TextWatcher watcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -260,31 +195,138 @@ public class AddMemoActivity extends AppCompatActivity {
         }
     };
 
+    private boolean saveMemo(){
+        int canSave = checkCanSave();
+        if(canSave != 0){
+            return false;
+        }
+        isModified = false;
+        isSaved = true;
+        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString());
+        DBManager dbManager = new DBManager(getApplicationContext());
+        if(dbIdx == -1) {
+            dbIdx = dbManager.getItemsCount();
+            dbManager.addData(data);
+        }
+        else{
+            dbManager.updateData(data, dbIdx);
+        }
+        showToast("메모를 저장하였습니다.", Toast.LENGTH_SHORT);
+        return true;
+    }
+
     @Override
     public void onBackPressed() {
+        hideKeyboard();
+        AlertDialog.Builder oDialog;
+        String message = "";
+        int canSave = checkCanSave();
+        if(canSave == 1) message = "제목";
+        else if (canSave == 2) message = "내용";
         if(dbIdx == -1) {
-            if (isModified)
-                saveMemo(true);
+            if (isModified) {
+                if(canSave != 0){
+                    oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
+                    oDialog.setTitle("나가기")
+                            .setMessage(message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?")
+                            .setPositiveButton("예", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    setResult(RESULT_CANCELED);
+                                    finish();
+                                }
+                            })
+                            .setNeutralButton("아니요",  new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    return;
+                                }
+                            })
+                            .setCancelable(false)
+                            .show();
+                }
+                else {
+                    saveMemo();
+                    setResult(RESULT_OK);
+                    finish();
+                }
+            }
             else {
                 exitActivity();
             }
         }
         else {
-            if(isModified){
-                if(title_edit.getText().toString().equals("") || content_edit.getText().toString().equals("")){
-                    showToast("제목과 내용을 확인해주세요.", Toast.LENGTH_SHORT);
-                }
-                else {
-                    makeDialog();
-                }
+            if(isReadOnly){
+                exitActivity();
             }
-            else {
-                if(!isReadOnly)
-                    changeToReadOnlyMode();
-                else {
-                    exitActivity();
+            else{
+                if(isModified){
+                    if(checkCanSave() != 0){
+                        oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
+                        oDialog.setTitle("나가기")
+                                .setMessage(message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?")
+                                .setPositiveButton("예", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        setResult(RESULT_CANCELED);
+                                        finish();
+                                    }
+                                })
+                                .setNeutralButton("아니요",  new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        return;
+                                    }
+                                })
+                                .setCancelable(false)
+                                .show();
+                    }
+                    else {
+                        final CharSequence[] items =  {"저장하고 나가기", "저장하지 않고 나가기", "취소"};
+                        oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+                                .setTitle("메모를 저장하시겠습니까?")
+                                .setItems(items, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int pos) {
+                                        switch (pos){
+                                            case 0:
+                                                saveMemo();
+                                                setResult(RESULT_OK);
+                                                finish();
+                                                break;
+                                            case 1:
+                                                setResult(RESULT_CANCELED);
+                                                finish();
+                                                break;
+                                        }
+                                    }
+                                })
+                                .setCancelable(false);
+                        oDialog.show();
+                    }
                 }
             }
         }
+    }
+
+    private void exitActivity(){
+        if(isSaved) { setResult(RESULT_OK); }
+        else if (!isSaved && !isReadOnly){
+            showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
+            setResult(RESULT_CANCELED);
+        }
+        finish();
+    }
+
+    private void hideKeyboard(){
+        if(getCurrentFocus() != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
+    private void showToast(String str, int duration){
+        Toast t = Toast.makeText(getApplicationContext(), str, duration);
+        t.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, t.getYOffset());
+        t.show();
     }
 }
