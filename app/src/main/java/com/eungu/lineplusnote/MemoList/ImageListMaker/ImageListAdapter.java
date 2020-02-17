@@ -1,6 +1,7 @@
 package com.eungu.lineplusnote.MemoList.ImageListMaker;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,17 +51,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull final ImageListAdapter.ViewHolder viewHolder, int i) {
-////        viewHolder.iv.setImageBitmap();
-//        final int idx = i;
-//        final DBManager dbManager = new DBManager(context);
-//        final DBData data = dbManager.getData(idx);
-//        if(data == null) return;
-//        String title = aData.get(i).getTitle();
-//        String content = aData.get(i).getContent();
-//        String time = aData.get(i).getDate();
-//        viewHolder.text_title.setText(title);
-//        viewHolder.text_content.setText(content);
-//        viewHolder.text_date.setText(time);
+        viewHolder.iv.setImageBitmap(aData.get(i).getImage());
     }
 
     @Override

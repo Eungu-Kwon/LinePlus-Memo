@@ -1,11 +1,25 @@
 package com.eungu.lineplusnote.MemoList;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,6 +27,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -28,13 +43,21 @@ import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListItem;
 import com.eungu.lineplusnote.R;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
 public class AddMemoActivity extends AppCompatActivity {
     EditText title_edit = null;
     EditText content_edit = null;
-    Button select_image_button = null;
+    Button add_image_button = null;
 
     MenuItem edit_menu, save_menu;
 
@@ -43,10 +66,27 @@ public class AddMemoActivity extends AppCompatActivity {
     private boolean isModified = false, isSaved = false;
     private boolean isReadOnly;
 
+    private ArrayList<String> imageId;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_or_modify_memo);
+
+        initView();
+        setToolbar();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(dbIdx != -1) {
+
+            setImageList();
+        }
+    }
+
+    private void initView(){
         Intent intent = getIntent();
         dbIdx = intent.getExtras().getInt("idx", -1);
 
@@ -54,7 +94,17 @@ public class AddMemoActivity extends AppCompatActivity {
         title_edit.addTextChangedListener(watcher);
         content_edit = findViewById(R.id.edit_content);
         content_edit.addTextChangedListener(watcher);
-        select_image_button = findViewById(R.id.edit_add_image);
+        add_image_button = findViewById(R.id.edit_add_image);
+
+        add_image_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent();
+                i.setType("image/*");
+                i.setAction(Intent.ACTION_GET_CONTENT);
+                startActivityForResult(Intent.createChooser(i, "이미지 추가"), 100);
+            }
+        });
 
         if(dbIdx != -1){
             inputEditData();
@@ -63,8 +113,6 @@ public class AddMemoActivity extends AppCompatActivity {
         else { isReadOnly = false; }
 
         isModified = false;
-        setToolbar();
-        setImageList();
     }
 
     private void setToolbar(){
@@ -84,13 +132,27 @@ public class AddMemoActivity extends AppCompatActivity {
 
     private void setImageList(){
         RecyclerView imageList = findViewById(R.id.image_list);
-        ArrayList<ImageListItem> al = new ArrayList<ImageListItem>();
-        al.add(new ImageListItem());
-        al.add(new ImageListItem());
-        al.add(new ImageListItem());
-        ImageListAdapter imageListAdapter = new ImageListAdapter(this, al);
-        imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        imageList.setAdapter(imageListAdapter);
+        ArrayList<ImageListItem> imageListItems = new ArrayList<ImageListItem>();
+        try {
+            Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            String[] proj = new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.MIME_TYPE};
+
+            Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
+            if(c == null || !c.moveToFirst()) return;
+
+            do{
+                Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
+                InputStream is = getContentResolver().openInputStream(uri_item);
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(is);
+                imageListItems.add(new ImageListItem(BitmapFactory.decodeStream(bufferedInputStream), c.getString(0)));
+            } while(c.moveToNext());
+
+            ImageListAdapter imageListAdapter = new ImageListAdapter(this, imageListItems);
+            imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+            imageList.setAdapter(imageListAdapter);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -161,7 +223,7 @@ public class AddMemoActivity extends AppCompatActivity {
         save_menu.setVisible(false);
         title_edit.setFocusable(false);
         content_edit.setFocusable(false);
-        select_image_button.setVisibility(View.GONE);
+        add_image_button.setVisibility(View.GONE);
         isReadOnly = true;
     }
 
@@ -173,7 +235,7 @@ public class AddMemoActivity extends AppCompatActivity {
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         title_edit.requestFocus();
         imm.showSoftInput(title_edit, InputMethodManager.SHOW_IMPLICIT);
-        select_image_button.setVisibility(View.VISIBLE);
+        add_image_button.setVisibility(View.VISIBLE);
         edit_menu.setVisible(false);
         save_menu.setVisible(true);
         isReadOnly = false;
@@ -319,6 +381,9 @@ public class AddMemoActivity extends AppCompatActivity {
                         oDialog.show();
                     }
                 }
+                else {
+                    changeToReadOnlyMode();
+                }
             }
         }
     }
@@ -343,5 +408,91 @@ public class AddMemoActivity extends AppCompatActivity {
         Toast t = Toast.makeText(getApplicationContext(), str, duration);
         t.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, t.getYOffset());
         t.show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 100 && resultCode == RESULT_OK){
+            Uri uri = data.getData();
+            saveImage(uri);
+        }
+    }
+
+    public static byte[] inputStreamToByteArray(InputStream is) {
+
+        byte[] resBytes = null;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        byte[] buffer = new byte[1024];
+        int read = -1;
+        try {
+            while ( (read = is.read(buffer)) != -1 ) {
+                bos.write(buffer, 0, read);
+            }
+
+            resBytes = bos.toByteArray();
+            bos.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return resBytes;
+    }
+
+    private ArrayList<Bitmap> readFile() throws FileNotFoundException {
+        ArrayList<Bitmap> ret = new ArrayList<>();
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String[] proj = new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.MIME_TYPE};
+
+        Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
+        if(c == null || !c.moveToFirst()) return null;
+
+        do{
+            Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
+            InputStream is = getContentResolver().openInputStream(uri_item);
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(is);
+            ret.add(BitmapFactory.decodeStream(bufferedInputStream));
+        } while(c.moveToNext());
+
+        return ret;
+    }
+
+    private void saveImage(Uri uri){
+        Uri collection;
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, "image.jpg");
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) values.put(MediaStore.Images.Media.IS_PENDING, 1);
+
+        ContentResolver contentResolver = getContentResolver();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        else collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        Uri item = contentResolver.insert(collection, values);
+
+        try {
+            ParcelFileDescriptor pdf = contentResolver.openFileDescriptor(item, "w", null);
+            if (pdf != null) {
+                InputStream inputStream = contentResolver.openInputStream(uri);
+                byte[] strToByte = inputStreamToByteArray(inputStream);
+                FileOutputStream fos = new FileOutputStream(pdf.getFileDescriptor());
+                fos.write(strToByte);
+                fos.close();
+                inputStream.close();
+                pdf.close();
+                contentResolver.update(item, values, null, null);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.clear();
+            values.put(MediaStore.Images.Media.IS_PENDING, 0);
+            contentResolver.update(item, values, null, null);
+        }
     }
 }
