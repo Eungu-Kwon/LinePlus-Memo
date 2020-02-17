@@ -80,8 +80,7 @@ public class AddMemoActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(dbIdx != -1) {
-
+        if(!imageId.isEmpty()) {
             setImageList();
         }
     }
@@ -99,6 +98,7 @@ public class AddMemoActivity extends AppCompatActivity {
         add_image_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                hideKeyboard();
                 Intent i = new Intent();
                 i.setType("image/*");
                 i.setAction(Intent.ACTION_GET_CONTENT);
@@ -110,9 +110,22 @@ public class AddMemoActivity extends AppCompatActivity {
             inputEditData();
             isReadOnly = true;
         }
-        else { isReadOnly = false; }
+        else {
+            isReadOnly = false;
+            imageId = new ArrayList<>();
+        }
 
         isModified = false;
+    }
+
+    private void inputEditData(){
+        DBManager dbManager = new DBManager(this);
+        DBData data = dbManager.getData(dbIdx);
+
+        title_edit.setText(data.getTitle());
+        content_edit.setText(data.getContent());
+        Log.d("listLog", data.getImageList());
+        imageId = imageListStringToArray(data.getImageList());
     }
 
     private void setToolbar(){
@@ -139,12 +152,13 @@ public class AddMemoActivity extends AppCompatActivity {
 
             Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
             if(c == null || !c.moveToFirst()) return;
-
             do{
-                Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
-                InputStream is = getContentResolver().openInputStream(uri_item);
-                BufferedInputStream bufferedInputStream = new BufferedInputStream(is);
-                imageListItems.add(new ImageListItem(BitmapFactory.decodeStream(bufferedInputStream), c.getString(0)));
+                if(imageId.contains(c.getString(0))) {
+                    Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
+                    InputStream is = getContentResolver().openInputStream(uri_item);
+                    BufferedInputStream bufferedInputStream = new BufferedInputStream(is);
+                    imageListItems.add(new ImageListItem(BitmapFactory.decodeStream(bufferedInputStream), c.getString(0)));
+                }
             } while(c.moveToNext());
 
             ImageListAdapter imageListAdapter = new ImageListAdapter(this, imageListItems);
@@ -241,14 +255,6 @@ public class AddMemoActivity extends AppCompatActivity {
         isReadOnly = false;
     }
 
-    private void inputEditData(){
-        DBManager dbManager = new DBManager(this);
-        DBData data = dbManager.getData(dbIdx);
-
-        title_edit.setText(data.getTitle());
-        content_edit.setText(data.getContent());
-    }
-
     private int checkCanSave(){
         if(title_edit.getText().toString().equals("")) return 1;
         else if(content_edit.getText().toString().equals("")) return 2;
@@ -279,7 +285,7 @@ public class AddMemoActivity extends AppCompatActivity {
         }
         isModified = false;
         isSaved = true;
-        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString());
+        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString(), imageListArrayToString(imageId));
         DBManager dbManager = new DBManager(getApplicationContext());
         if(dbIdx == -1) {
             dbIdx = dbManager.getItemsCount();
@@ -482,6 +488,11 @@ public class AddMemoActivity extends AppCompatActivity {
                 inputStream.close();
                 pdf.close();
                 contentResolver.update(item, values, null, null);
+
+                String[] proj = new String[]{MediaStore.Images.Media._ID};
+                Cursor c = getContentResolver().query(item, proj, null, null, null, null);
+                c.moveToFirst();
+                imageId.add(c.getString(0));
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -494,5 +505,22 @@ public class AddMemoActivity extends AppCompatActivity {
             values.put(MediaStore.Images.Media.IS_PENDING, 0);
             contentResolver.update(item, values, null, null);
         }
+    }
+
+    private static ArrayList<String> imageListStringToArray(String str){
+        ArrayList<String> list = new ArrayList<>();
+        String[] str_list = str.split(",");
+        for(String i : str_list){
+            list.add(i);
+        }
+        return list;
+    }
+
+    private static String imageListArrayToString(ArrayList<String> arr){
+        String str = "";
+        for(String i : arr){
+            str += i + ",";
+        }
+        return str;
     }
 }

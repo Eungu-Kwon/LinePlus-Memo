@@ -12,27 +12,30 @@ public class DBData implements Serializable {
     public static final String MEMO_TITLE = "MEMO_TITLE";
     public static final String MEMO_CONTENT = "MEMO_CONTENT";
     public static final String MEMO_DATE = "MEMO_DATE";
+    public static final String MEMO_IMAGES = "MEMO_IMAGES";
 
     private final static String DATE_PAT = "yyyy-MM-dd HH:mm:ss";
 
     Calendar time;
     String title, content;
-    ArrayList<String> ImageList;
+    String ImageList;
 
     public DBData() {
         time = Calendar.getInstance();
     }
 
-    public DBData(Calendar _time, String title, String _content) {
+    public DBData(Calendar _time, String title, String _content, String ImageList) {
         this.time = _time;
         this.title = title;
         this.content = _content;
+        this.ImageList = ImageList;
     }
 
-    public void updateData(Calendar _time, String title, String _content) {
+    public void updateData(Calendar _time, String title, String _content, String ImageList) {
         this.time = _time;
         this.title = title;
         this.content = _content;
+        this.ImageList = ImageList;
     }
 
     public String getTimeToText(){
@@ -77,4 +80,11 @@ public class DBData implements Serializable {
         this.content = content;
     }
 
+    public String getImageList() {
+        return ImageList;
+    }
+
+    public void setImageList(String imageList) {
+        ImageList = imageList;
+    }
 }
