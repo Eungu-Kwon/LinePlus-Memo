@@ -6,6 +6,9 @@ public class ImageListItem {
     Bitmap image;
     String _id;
 
+    public ImageListItem() {
+    }
+
     public ImageListItem(Bitmap image, String _id) {
         this.image = image;
         this._id = _id;

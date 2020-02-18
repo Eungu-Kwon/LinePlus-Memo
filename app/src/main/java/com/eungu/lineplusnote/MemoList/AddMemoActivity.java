@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -99,10 +100,28 @@ public class AddMemoActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 hideKeyboard();
-                Intent i = new Intent();
-                i.setType("image/*");
-                i.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(i, "이미지 추가"), 100);
+                final CharSequence[] items =  {"사진 촬영", "갤러리에서 선택", "URL에서 선택"};
+                AlertDialog.Builder oDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+                        .setTitle("이미지 불러오기")
+                        .setItems(items, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int pos) {
+                                switch (pos){
+                                    case 0:
+                                        //TODO add camera system
+                                        break;
+                                    case 1:
+                                        Intent i = new Intent();
+                                        i.setType("image/*");
+                                        i.setAction(Intent.ACTION_GET_CONTENT);
+                                        startActivityForResult(Intent.createChooser(i, "이미지 추가"), 100);
+                                        break;
+                                    case 2:
+                                        //TODO make add image from URL
+                                        break;
+                                }
+                            }
+                        });
+                oDialog.show();
             }
         });
 
@@ -145,28 +164,39 @@ public class AddMemoActivity extends AppCompatActivity {
 
     private void setImageList(){
         RecyclerView imageList = findViewById(R.id.image_list);
-        ArrayList<ImageListItem> imageListItems = new ArrayList<ImageListItem>();
-        try {
-            Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-            String[] proj = new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.MIME_TYPE};
+        ArrayList<ImageListItem> imageListItems = new ArrayList<>();
+        for(String s : imageId) imageListItems.add(new ImageListItem());
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String[] proj = new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.MIME_TYPE};
 
-            Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
-            if(c == null || !c.moveToFirst()) return;
-            do{
-                if(imageId.contains(c.getString(0))) {
-                    Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
-                    InputStream is = getContentResolver().openInputStream(uri_item);
-                    BufferedInputStream bufferedInputStream = new BufferedInputStream(is);
-                    imageListItems.add(new ImageListItem(BitmapFactory.decodeStream(bufferedInputStream), c.getString(0)));
-                }
-            } while(c.moveToNext());
+        Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
+        if(c == null || !c.moveToFirst()) return;
+        do{
+            if(imageId.contains(c.getString(0))) {
+                Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
+                imageListItems.set(imageId.indexOf(c.getString(0)), new ImageListItem(getBmpFromUriWithResize(uri_item), c.getString(0)));
+            }
+        } while(c.moveToNext());
 
-            ImageListAdapter imageListAdapter = new ImageListAdapter(this, imageListItems);
-            imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-            imageList.setAdapter(imageListAdapter);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        ImageListAdapter imageListAdapter = new ImageListAdapter(this, imageListItems);
+        imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        imageList.setAdapter(imageListAdapter);
+    }
+
+    private void deleteImage(String id){
+        if(imageId.isEmpty()) return;
+
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String[] proj = new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.MIME_TYPE};
+        Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
+        if(c == null || !c.moveToFirst()) return;
+        do{
+            if(imageId.contains(c.getString(0)) && (id == null || c.getString(0).equals(id))) {
+                Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
+                getContentResolver().delete(uri_item, null, null);
+                if(id != null) break;
+            }
+        } while(c.moveToNext());
     }
 
     @Override
@@ -218,6 +248,7 @@ public class AddMemoActivity extends AppCompatActivity {
                                     dbManager.deleteColumn(dbIdx);
                                     setResult(RESULT_OK);
                                 }
+                                deleteImage(null);
                                 showToast("메모를 삭제하였습니다.", Toast.LENGTH_SHORT);
                                 finish();
                             }
@@ -377,7 +408,10 @@ public class AddMemoActivity extends AppCompatActivity {
                                                 finish();
                                                 break;
                                             case 1:
-                                                setResult(RESULT_CANCELED);
+                                                if(isSaved)
+                                                    setResult(RESULT_OK);
+                                                else
+                                                    setResult(RESULT_CANCELED);
                                                 finish();
                                                 break;
                                         }
@@ -417,11 +451,18 @@ public class AddMemoActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //TODO release
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == 100 && resultCode == RESULT_OK){
             Uri uri = data.getData();
             saveImage(uri);
+            isModified = true;
         }
     }
 
@@ -447,24 +488,6 @@ public class AddMemoActivity extends AppCompatActivity {
         return resBytes;
     }
 
-    private ArrayList<Bitmap> readFile() throws FileNotFoundException {
-        ArrayList<Bitmap> ret = new ArrayList<>();
-        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] proj = new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.MIME_TYPE};
-
-        Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
-        if(c == null || !c.moveToFirst()) return null;
-
-        do{
-            Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
-            InputStream is = getContentResolver().openInputStream(uri_item);
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(is);
-            ret.add(BitmapFactory.decodeStream(bufferedInputStream));
-        } while(c.moveToNext());
-
-        return ret;
-    }
-
     private void saveImage(Uri uri){
         Uri collection;
         ContentValues values = new ContentValues();
@@ -475,6 +498,7 @@ public class AddMemoActivity extends AppCompatActivity {
         ContentResolver contentResolver = getContentResolver();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
         else collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        //TODO ADD PERMISSION DIALOG
         Uri item = contentResolver.insert(collection, values);
 
         try {
@@ -511,6 +535,7 @@ public class AddMemoActivity extends AppCompatActivity {
         ArrayList<String> list = new ArrayList<>();
         String[] str_list = str.split(",");
         for(String i : str_list){
+            if (i == null || i.equals("")) continue;
             list.add(i);
         }
         return list;
@@ -523,4 +548,61 @@ public class AddMemoActivity extends AppCompatActivity {
         }
         return str;
     }
+
+    private Bitmap getBmpFromUriWithResize(Uri uri){
+        InputStream is = null;
+        try {
+            is = getContentResolver().openInputStream(uri);
+
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(new BufferedInputStream(is), null, options);
+
+            int width = options.outWidth;
+            int height = options.outHeight;
+
+            options.inSampleSize = calculateInSampleSize(options, 100, 100);
+            options.inJustDecodeBounds = false;
+
+            Bitmap bmp = BitmapFactory.decodeStream(new BufferedInputStream(getContentResolver().openInputStream(uri)), null, options);
+
+            Log.d("ssize", width + "");
+
+            if(height < width) {
+                Matrix matrix = new Matrix();
+                matrix.postRotate(90);
+
+                Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
+                bmp.recycle();
+                return resizedBitmap;
+            }
+
+            else return bmp;
+        } catch (FileNotFoundException e) {
+            return null;
+        }
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) >= reqHeight
+                    && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+
 }
