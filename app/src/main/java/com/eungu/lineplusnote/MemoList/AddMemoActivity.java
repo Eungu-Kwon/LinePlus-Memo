@@ -12,6 +12,7 @@ import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.text.Editable;
@@ -162,18 +163,12 @@ public class AddMemoActivity extends AppCompatActivity {
 
     private void deleteImage(String id){
         if(imageId.isEmpty()) return;
-
         Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] proj = new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.MIME_TYPE};
-        Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
-        if(c == null || !c.moveToFirst()) return;
-        do{
-            if(imageId.contains(c.getString(0)) && (id == null || c.getString(0).equals(id))) {
-                Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
-                getContentResolver().delete(uri_item, null, null);
-                if(id != null) break;
-            }
-        } while(c.moveToNext());
+
+        for(int i = 0; i < imageId.size(); ++i) {
+            Uri uri_item = Uri.parse(uri.toString() + "/" + imageId.get(i));
+            if(uri_item != null) getContentResolver().delete(uri_item, null, null);
+        }
     }
 
     @Override
@@ -467,6 +462,7 @@ public class AddMemoActivity extends AppCompatActivity {
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.DISPLAY_NAME, "image.jpg");
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
+        values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LineMemo");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) values.put(MediaStore.Images.Media.IS_PENDING, 1);
 
         ContentResolver contentResolver = getContentResolver();
