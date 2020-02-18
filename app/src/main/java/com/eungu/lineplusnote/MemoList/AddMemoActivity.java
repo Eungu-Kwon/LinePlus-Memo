@@ -3,7 +3,6 @@ package com.eungu.lineplusnote.MemoList;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -13,11 +12,8 @@ import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -28,13 +24,11 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -46,12 +40,10 @@ import com.eungu.lineplusnote.R;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -148,18 +140,8 @@ public class AddMemoActivity extends AppCompatActivity {
     }
 
     private void setToolbar(){
-        Toolbar toolbar = (Toolbar) findViewById(R.id.add_layout_toolbar);
-        setSupportActionBar(toolbar);
-
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
     }
 
     private void setImageList(){
@@ -213,6 +195,9 @@ public class AddMemoActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         hideKeyboard();
         switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
             case R.id.m_edit_memo :
                 changeToWritableMode();
                 return true;
@@ -443,12 +428,6 @@ public class AddMemoActivity extends AppCompatActivity {
         Toast t = Toast.makeText(getApplicationContext(), str, duration);
         t.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, t.getYOffset());
         t.show();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        //TODO release
     }
 
     @Override

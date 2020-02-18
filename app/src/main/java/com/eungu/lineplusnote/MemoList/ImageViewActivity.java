@@ -8,11 +8,11 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.MenuItem;
 import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
 import com.eungu.lineplusnote.R;
 import com.github.chrisbanes.photoview.PhotoView;
@@ -24,7 +24,7 @@ import java.io.InputStream;
 public class ImageViewActivity extends AppCompatActivity {
     String _id;
     boolean isFullmode;
-    Toolbar tb;
+    Bitmap bmp;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,15 +32,6 @@ public class ImageViewActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         _id = intent.getExtras().getString("_id", "");
-
-        tb = findViewById(R.id.image_view_toolbar);
-        tb.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
-        setSupportActionBar(tb);
 
         isFullmode = true;
         hideSystemUI();
@@ -61,11 +52,10 @@ public class ImageViewActivity extends AppCompatActivity {
                 }
             }
         });
-        pv.setImageDrawable(new BitmapDrawable(this.getResources(), getBmpFromUriWithRotate(uri_item)));
-
+        bmp = getBmpFromUriWithRotate(uri_item);
+        pv.setImageDrawable(new BitmapDrawable(this.getResources(), bmp));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-
     }
 
     private Bitmap getBmpFromUriWithRotate(Uri uri){
@@ -95,7 +85,6 @@ public class ImageViewActivity extends AppCompatActivity {
         // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
         // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         View decorView = getWindow().getDecorView();
-//        tb.setVisibility(View.GONE);
         getSupportActionBar().hide();
         decorView.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_IMMERSIVE
@@ -113,11 +102,26 @@ public class ImageViewActivity extends AppCompatActivity {
     // except for the ones that make the content appear under the system bars.
     private void showSystemUI() {
         View decorView = getWindow().getDecorView();
-//        tb.setVisibility(View.VISIBLE);
         getSupportActionBar().show();
         decorView.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        bmp.recycle();
     }
 }

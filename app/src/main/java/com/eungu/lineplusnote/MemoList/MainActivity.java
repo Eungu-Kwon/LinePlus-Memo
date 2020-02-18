@@ -2,7 +2,6 @@ package com.eungu.lineplusnote.MemoList;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,9 +27,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        Toolbar tb = (Toolbar) findViewById(R.id.main_toolbar) ;
-        setSupportActionBar(tb) ;
 
         init_list();
         setList();
