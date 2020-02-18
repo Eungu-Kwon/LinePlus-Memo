@@ -165,18 +165,13 @@ public class AddMemoActivity extends AppCompatActivity {
     private void setImageList(){
         RecyclerView imageList = findViewById(R.id.image_list);
         ArrayList<ImageListItem> imageListItems = new ArrayList<>();
-        for(String s : imageId) imageListItems.add(new ImageListItem());
-        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] proj = new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.MIME_TYPE};
 
-        Cursor c = getContentResolver().query(uri, proj, null, null, null, null);
-        if(c == null || !c.moveToFirst()) return;
-        do{
-            if(imageId.contains(c.getString(0))) {
-                Uri uri_item = Uri.parse(uri.toString() + "/" + c.getString(0));
-                imageListItems.set(imageId.indexOf(c.getString(0)), new ImageListItem(getBmpFromUriWithResize(uri_item), c.getString(0)));
-            }
-        } while(c.moveToNext());
+        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+
+        for(int i = 0; i < imageId.size(); ++i) {
+            Uri uri_item = Uri.parse(uri.toString() + "/" + imageId.get(i));
+            if(uri_item != null) imageListItems.add(new ImageListItem(getBmpFromUriWithResize(uri_item), imageId.get(i)));
+        }
 
         ImageListAdapter imageListAdapter = new ImageListAdapter(this, imageListItems);
         imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));

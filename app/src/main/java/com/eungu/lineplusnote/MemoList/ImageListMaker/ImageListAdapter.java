@@ -1,6 +1,7 @@
 package com.eungu.lineplusnote.MemoList.ImageListMaker;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +11,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.eungu.lineplusnote.MemoList.ImageViewActivity;
 import com.eungu.lineplusnote.R;
 
 import java.util.ArrayList;
@@ -19,7 +21,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
     Context context;
     public class ViewHolder extends RecyclerView.ViewHolder{
         ImageView iv;
-        ViewHolder(View itemView) {
+        ViewHolder(final View itemView) {
             super(itemView) ;
 
             iv = itemView.findViewById(R.id.image_list_item);
@@ -27,7 +29,9 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
+                    Intent i = new Intent(v.getContext(), ImageViewActivity.class);
+                    i.putExtra("_id", aData.get(getAdapterPosition()).get_id());
+                    v.getContext().startActivity(i);
                 }
             });
         }
