@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,7 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 public class ImageViewActivity extends AppCompatActivity {
-    String _id;
+    String path;
     boolean isFullmode;
     Bitmap bmp;
     @Override
@@ -31,14 +32,13 @@ public class ImageViewActivity extends AppCompatActivity {
         setContentView(R.layout.image_view_layout);
 
         Intent intent = getIntent();
-        _id = intent.getExtras().getString("_id", "");
+        path = intent.getExtras().getString("path", "");
 
         isFullmode = true;
         hideSystemUI();
 
         // PhotoView by https://github.com/chrisbanes/PhotoView
         PhotoView pv = findViewById(R.id.photo_view);
-        Uri uri_item = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString() + "/" + _id);
         pv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -52,32 +52,23 @@ public class ImageViewActivity extends AppCompatActivity {
                 }
             }
         });
-        bmp = getBmpFromUriWithRotate(uri_item);
-        pv.setImageDrawable(new BitmapDrawable(this.getResources(), bmp));
+        bmp = BitmapFactory.decodeFile(getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + path);
+        pv.setImageDrawable(new BitmapDrawable(this.getResources(), getBmpFromUriWithRotate(bmp)));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
 
-    private Bitmap getBmpFromUriWithRotate(Uri uri){
-        InputStream is = null;
-        try {
-            is = getContentResolver().openInputStream(uri);
+    private Bitmap getBmpFromUriWithRotate(Bitmap bmp){
+        if(bmp.getHeight() < bmp.getWidth()) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(90);
 
-            Bitmap bmp = BitmapFactory.decodeStream(new BufferedInputStream(getContentResolver().openInputStream(uri)));
-
-            if(bmp.getHeight() < bmp.getWidth()) {
-                Matrix matrix = new Matrix();
-                matrix.postRotate(90);
-
-                Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
-                bmp.recycle();
-                return resizedBitmap;
-            }
-
-            else return bmp;
-        } catch (FileNotFoundException e) {
-            return null;
+            Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
+            bmp.recycle();
+            return resizedBitmap;
         }
+
+        else return bmp;
     }
 
     private void hideSystemUI() {

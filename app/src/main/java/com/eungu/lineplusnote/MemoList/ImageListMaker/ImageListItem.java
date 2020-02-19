@@ -4,14 +4,14 @@ import android.graphics.Bitmap;
 
 public class ImageListItem {
     Bitmap image;
-    String _id;
+    String name;
 
     public ImageListItem() {
     }
 
-    public ImageListItem(Bitmap image, String _id) {
+    public ImageListItem(Bitmap image, String path) {
         this.image = image;
-        this._id = _id;
+        this.name = path;
     }
 
     public Bitmap getImage() {
@@ -22,11 +22,11 @@ public class ImageListItem {
         this.image = image;
     }
 
-    public String get_id() {
-        return _id;
+    public String getName() {
+        return name;
     }
 
-    public void set_id(String _id) {
-        this._id = _id;
+    public void setName(String name) {
+        this.name = name;
     }
 }

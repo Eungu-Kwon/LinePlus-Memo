@@ -1,19 +1,14 @@
 package com.eungu.lineplusnote.MemoList;
 
 import android.app.Activity;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -38,10 +33,8 @@ import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListItem;
 import com.eungu.lineplusnote.R;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +54,7 @@ public class AddMemoActivity extends AppCompatActivity {
     private boolean isModified = false, isSaved = false;
     private boolean isReadOnly;
 
-    private ArrayList<String> imageId;
+    private ArrayList<String> imageName;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -75,7 +68,7 @@ public class AddMemoActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(!imageId.isEmpty()) {
+        if(!imageName.isEmpty()) {
             setImageList();
         }
     }
@@ -125,7 +118,7 @@ public class AddMemoActivity extends AppCompatActivity {
         }
         else {
             isReadOnly = false;
-            imageId = new ArrayList<>();
+            imageName = new ArrayList<>();
         }
 
         isModified = false;
@@ -137,7 +130,7 @@ public class AddMemoActivity extends AppCompatActivity {
 
         title_edit.setText(data.getTitle());
         content_edit.setText(data.getContent());
-        imageId = imageListStringToArray(data.getImageList());
+        imageName = imageListStringToArray(data.getImageList());
     }
 
     private void setToolbar(){
@@ -149,11 +142,11 @@ public class AddMemoActivity extends AppCompatActivity {
         RecyclerView imageList = findViewById(R.id.image_list);
         ArrayList<ImageListItem> imageListItems = new ArrayList<>();
 
-        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-
-        for(int i = 0; i < imageId.size(); ++i) {
-            Uri uri_item = Uri.parse(uri.toString() + "/" + imageId.get(i));
-            if(uri_item != null) imageListItems.add(new ImageListItem(getBmpFromUriWithResize(uri_item), imageId.get(i)));
+        for(int i = 0; i < imageName.size(); ++i) {
+            File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
+            if(file != null){
+                imageListItems.add(new ImageListItem(getBmpFromUriWithResize(file.getAbsolutePath()), imageName.get(i)));
+            }
         }
 
         ImageListAdapter imageListAdapter = new ImageListAdapter(this, imageListItems);
@@ -161,13 +154,18 @@ public class AddMemoActivity extends AppCompatActivity {
         imageList.setAdapter(imageListAdapter);
     }
 
-    private void deleteImage(String id){
-        if(imageId.isEmpty()) return;
-        Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+    private void deleteImage(String name){
+        if(imageName.isEmpty()) return;
 
-        for(int i = 0; i < imageId.size(); ++i) {
-            Uri uri_item = Uri.parse(uri.toString() + "/" + imageId.get(i));
-            if(uri_item != null) getContentResolver().delete(uri_item, null, null);
+        if (name == null) {
+            for(int i = 0; i < imageName.size(); ++i) {
+                File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
+                file.delete();
+            }
+        }
+        else{
+            File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), name);
+            file.delete();
         }
     }
 
@@ -291,7 +289,7 @@ public class AddMemoActivity extends AppCompatActivity {
         }
         isModified = false;
         isSaved = true;
-        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString(), imageListArrayToString(imageId));
+        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString(), imageListArrayToString(imageName));
         DBManager dbManager = new DBManager(getApplicationContext());
         if(dbIdx == -1) {
             dbIdx = dbManager.getItemsCount();
@@ -462,52 +460,18 @@ public class AddMemoActivity extends AppCompatActivity {
     }
 
     private void saveImage(Uri uri) throws IOException {
-        Uri collection;
-        ContentValues values = new ContentValues();
-        ContentResolver contentResolver = getContentResolver();
+        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+        InputStream inputStream = getContentResolver().openInputStream(uri);
+        byte[] strToByte = inputStreamToByteArray(inputStream);
 
-        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime()) + ".jpg";
+        File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileName);
 
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
+        FileOutputStream fos = new FileOutputStream(file);
+        fos.write(strToByte);
+        fos.close();
+        inputStream.close();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            values.put(MediaStore.Images.Media.IS_PENDING, 1);
-            collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-
-        }
-        else{
-            @SuppressWarnings("deprecation")
-            File saveDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/LineMemo");
-            if (!saveDir.exists()) saveDir.mkdir();
-
-            collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-            values.put(MediaStore.Images.Media.DATA, saveDir.getAbsolutePath() + "/" + fileName);
-        }
-        Uri item = contentResolver.insert(collection, values);
-
-        ParcelFileDescriptor pdf = contentResolver.openFileDescriptor(item, "w", null);
-        if (pdf != null) {
-            InputStream inputStream = contentResolver.openInputStream(uri);
-            byte[] strToByte = inputStreamToByteArray(inputStream);
-            FileOutputStream fos = new FileOutputStream(pdf.getFileDescriptor());
-            fos.write(strToByte);
-            fos.close();
-            inputStream.close();
-            pdf.close();
-            contentResolver.update(item, values, null, null);
-
-            String[] proj = new String[]{MediaStore.Images.Media._ID};
-            Cursor c = getContentResolver().query(item, proj, null, null, null, null);
-            c.moveToFirst();
-            imageId.add(c.getString(0));
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            values.clear();
-            values.put(MediaStore.Images.Media.IS_PENDING, 0);
-            contentResolver.update(item, values, null, null);
-        }
+        imageName.add(fileName);
     }
 
     private static ArrayList<String> imageListStringToArray(String str){
@@ -528,36 +492,29 @@ public class AddMemoActivity extends AppCompatActivity {
         return str;
     }
 
-    private Bitmap getBmpFromUriWithResize(Uri uri){
-        InputStream is = null;
-        try {
-            is = getContentResolver().openInputStream(uri);
+    private Bitmap getBmpFromUriWithResize(String path){
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
 
-            final BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeStream(new BufferedInputStream(is), null, options);
+        int width = options.outWidth;
+        int height = options.outHeight;
 
-            int width = options.outWidth;
-            int height = options.outHeight;
+        options.inSampleSize = calculateInSampleSize(options, 100, 100);
+        options.inJustDecodeBounds = false;
 
-            options.inSampleSize = calculateInSampleSize(options, 100, 100);
-            options.inJustDecodeBounds = false;
+        Bitmap bmp = BitmapFactory.decodeFile(path, options);
 
-            Bitmap bmp = BitmapFactory.decodeStream(new BufferedInputStream(getContentResolver().openInputStream(uri)), null, options);
+        if(height < width) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(90);
 
-            if(height < width) {
-                Matrix matrix = new Matrix();
-                matrix.postRotate(90);
-
-                Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
-                bmp.recycle();
-                return resizedBitmap;
-            }
-
-            else return bmp;
-        } catch (FileNotFoundException e) {
-            return null;
+            Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
+            bmp.recycle();
+            return resizedBitmap;
         }
+
+        else return bmp;
     }
 
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {

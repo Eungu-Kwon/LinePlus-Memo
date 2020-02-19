@@ -3,6 +3,7 @@ package com.eungu.lineplusnote.MemoList.ImageListMaker;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,7 +31,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                 @Override
                 public void onClick(View v) {
                     Intent i = new Intent(v.getContext(), ImageViewActivity.class);
-                    i.putExtra("_id", aData.get(getAdapterPosition()).get_id());
+                    i.putExtra("path", aData.get(getAdapterPosition()).getName());
                     v.getContext().startActivity(i);
                 }
             });
