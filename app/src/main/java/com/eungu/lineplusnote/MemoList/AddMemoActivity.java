@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,6 +36,8 @@ import com.eungu.lineplusnote.R;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +58,7 @@ public class AddMemoActivity extends AppCompatActivity {
     private boolean isReadOnly;
 
     private ArrayList<String> imageName;
+    private ArrayList<String> imageInCacheName;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -68,7 +72,7 @@ public class AddMemoActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(!imageName.isEmpty()) {
+        if(!imageName.isEmpty() || !imageInCacheName.isEmpty()) {
             setImageList();
         }
     }
@@ -120,7 +124,7 @@ public class AddMemoActivity extends AppCompatActivity {
             isReadOnly = false;
             imageName = new ArrayList<>();
         }
-
+        imageInCacheName = new ArrayList<>();
         isModified = false;
     }
 
@@ -141,11 +145,17 @@ public class AddMemoActivity extends AppCompatActivity {
     private void setImageList(){
         RecyclerView imageList = findViewById(R.id.image_list);
         ArrayList<ImageListItem> imageListItems = new ArrayList<>();
-
         for(int i = 0; i < imageName.size(); ++i) {
             File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
             if(file != null){
                 imageListItems.add(new ImageListItem(getBmpFromUriWithResize(file.getAbsolutePath()), imageName.get(i)));
+            }
+        }
+
+        for(int i = 0; i < imageInCacheName.size(); ++i) {
+            File fileInCache = new File(getExternalCacheDir(), imageInCacheName.get(i));
+            if(fileInCache != null){
+                imageListItems.add(new ImageListItem(getBmpFromUriWithResize(fileInCache.getAbsolutePath()), imageInCacheName.get(i)));
             }
         }
 
@@ -287,8 +297,11 @@ public class AddMemoActivity extends AppCompatActivity {
         if(canSave != 0){
             return false;
         }
+        saveImage();
         isModified = false;
         isSaved = true;
+        imageName.addAll(imageInCacheName);
+        imageInCacheName.clear();
         DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString(), imageListArrayToString(imageName));
         DBManager dbManager = new DBManager(getApplicationContext());
         if(dbIdx == -1) {
@@ -401,6 +414,15 @@ public class AddMemoActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        File[] files = getExternalCacheDir().listFiles();
+        for(File f : files){
+            if(f.exists()) f.delete();
+        }
+    }
+
     private void exitActivity(){
         if(isSaved) { setResult(RESULT_OK); }
         else if (!isSaved && !isReadOnly){
@@ -429,7 +451,7 @@ public class AddMemoActivity extends AppCompatActivity {
         if(requestCode == 100 && resultCode == RESULT_OK){
             Uri uri = data.getData();
             try {
-                saveImage(uri);
+                openImage(uri);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -459,19 +481,27 @@ public class AddMemoActivity extends AppCompatActivity {
         return resBytes;
     }
 
-    private void saveImage(Uri uri) throws IOException {
+    private void openImage(Uri uri) throws IOException {
         String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
         InputStream inputStream = getContentResolver().openInputStream(uri);
         byte[] strToByte = inputStreamToByteArray(inputStream);
 
-        File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileName);
+        File file = new File(getExternalCacheDir(), fileName);
 
         FileOutputStream fos = new FileOutputStream(file);
         fos.write(strToByte);
         fos.close();
         inputStream.close();
 
-        imageName.add(fileName);
+        imageInCacheName.add(fileName);
+    }
+
+    private void saveImage() {
+        //TODO make run in new Thread
+        File[] files = getExternalCacheDir().listFiles();
+        for(File f : files){
+            copyFile(f, getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + f.getName());
+        }
     }
 
     private static ArrayList<String> imageListStringToArray(String str){
@@ -539,4 +569,27 @@ public class AddMemoActivity extends AppCompatActivity {
         return inSampleSize;
     }
 
+    private boolean copyFile(File file , String save_file){
+        boolean result;
+        if(file != null && file.exists()){
+            try {
+                FileInputStream fis = new FileInputStream(file);
+                FileOutputStream newfos = new FileOutputStream(save_file);
+
+                int readcount=0;
+                byte[] buffer = new byte[1024];
+                while((readcount = fis.read(buffer,0,1024))!= -1){
+                    newfos.write(buffer,0,readcount);
+                }
+                newfos.close();
+                fis.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            result = true;
+        }else{
+            result = false;
+        }
+        return result;
+    }
 }
