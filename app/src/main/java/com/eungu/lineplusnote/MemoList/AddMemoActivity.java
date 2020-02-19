@@ -17,7 +17,6 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,10 +40,12 @@ import com.eungu.lineplusnote.R;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -136,7 +137,6 @@ public class AddMemoActivity extends AppCompatActivity {
 
         title_edit.setText(data.getTitle());
         content_edit.setText(data.getContent());
-        Log.d("listLog", data.getImageList());
         imageId = imageListStringToArray(data.getImageList());
     }
 
@@ -430,7 +430,11 @@ public class AddMemoActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == 100 && resultCode == RESULT_OK){
             Uri uri = data.getData();
-            saveImage(uri);
+            try {
+                saveImage(uri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             isModified = true;
         }
     }
@@ -457,41 +461,46 @@ public class AddMemoActivity extends AppCompatActivity {
         return resBytes;
     }
 
-    private void saveImage(Uri uri){
+    private void saveImage(Uri uri) throws IOException {
         Uri collection;
         ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, "image.jpg");
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
-        values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LineMemo");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) values.put(MediaStore.Images.Media.IS_PENDING, 1);
-
         ContentResolver contentResolver = getContentResolver();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-        else collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        //TODO ADD PERMISSION DIALOG
+
+        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime()) + ".jpg";
+
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.put(MediaStore.Images.Media.IS_PENDING, 1);
+            collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+
+        }
+        else{
+            @SuppressWarnings("deprecation")
+            File saveDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/LineMemo");
+            if (!saveDir.exists()) saveDir.mkdir();
+
+            collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            values.put(MediaStore.Images.Media.DATA, saveDir.getAbsolutePath() + "/" + fileName);
+        }
         Uri item = contentResolver.insert(collection, values);
 
-        try {
-            ParcelFileDescriptor pdf = contentResolver.openFileDescriptor(item, "w", null);
-            if (pdf != null) {
-                InputStream inputStream = contentResolver.openInputStream(uri);
-                byte[] strToByte = inputStreamToByteArray(inputStream);
-                FileOutputStream fos = new FileOutputStream(pdf.getFileDescriptor());
-                fos.write(strToByte);
-                fos.close();
-                inputStream.close();
-                pdf.close();
-                contentResolver.update(item, values, null, null);
+        ParcelFileDescriptor pdf = contentResolver.openFileDescriptor(item, "w", null);
+        if (pdf != null) {
+            InputStream inputStream = contentResolver.openInputStream(uri);
+            byte[] strToByte = inputStreamToByteArray(inputStream);
+            FileOutputStream fos = new FileOutputStream(pdf.getFileDescriptor());
+            fos.write(strToByte);
+            fos.close();
+            inputStream.close();
+            pdf.close();
+            contentResolver.update(item, values, null, null);
 
-                String[] proj = new String[]{MediaStore.Images.Media._ID};
-                Cursor c = getContentResolver().query(item, proj, null, null, null, null);
-                c.moveToFirst();
-                imageId.add(c.getString(0));
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            String[] proj = new String[]{MediaStore.Images.Media._ID};
+            Cursor c = getContentResolver().query(item, proj, null, null, null, null);
+            c.moveToFirst();
+            imageId.add(c.getString(0));
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -535,8 +544,6 @@ public class AddMemoActivity extends AppCompatActivity {
             options.inJustDecodeBounds = false;
 
             Bitmap bmp = BitmapFactory.decodeStream(new BufferedInputStream(getContentResolver().openInputStream(uri)), null, options);
-
-            Log.d("ssize", width + "");
 
             if(height < width) {
                 Matrix matrix = new Matrix();
