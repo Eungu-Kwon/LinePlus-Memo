@@ -6,10 +6,12 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
+import android.os.Handler;
+import android.os.Message;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -17,6 +19,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,6 +28,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,10 +41,10 @@ import com.eungu.lineplusnote.R;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -51,6 +55,8 @@ public class AddMemoActivity extends AppCompatActivity {
     Button add_image_button = null;
 
     MenuItem edit_menu, save_menu;
+
+    Handler handler;
 
     private int dbIdx;
 
@@ -64,6 +70,23 @@ public class AddMemoActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_or_modify_memo);
+
+        handler = new Handler() {
+            public void handleMessage(Message msg) {
+                Bundle bun = msg.getData();
+                String result = bun.getString("RESULT");
+                if(result == "OK"){
+                    setImageList();
+                }
+                else if(result == "FAIL"){
+                    AlertDialog.Builder errorDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+                            .setTitle("오류")
+                            .setMessage("주소로부터 이미지를 읽을 수 없습니다.")
+                            .setPositiveButton("확인", null);
+                    errorDialog.show();
+                }
+            }
+        };
 
         initView();
         setToolbar();
@@ -108,6 +131,39 @@ public class AddMemoActivity extends AppCompatActivity {
                                         break;
                                     case 2:
                                         //TODO make add image from URL
+                                        final EditText editText = new EditText(AddMemoActivity.this);
+                                        final ConstraintLayout container = new ConstraintLayout(AddMemoActivity.this);
+                                        final ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                        params.leftMargin = getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
+                                        params.rightMargin =getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
+                                        editText.setLayoutParams(params);
+                                        container.addView(editText);
+
+                                        AlertDialog.Builder urlDialog = new AlertDialog.Builder(AddMemoActivity.this);
+                                        urlDialog.setView(container)
+                                                .setTitle("URL 입력")
+                                                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                                        new Thread(){
+                                                            @Override
+                                                            public void run() {
+                                                                Bundle bun = new Bundle();
+                                                                if(openImage(editText.getText().toString())){
+                                                                    bun.putString("RESULT", "OK");
+                                                                }
+                                                                else{
+                                                                    bun.putString("RESULT", "FAIL");
+                                                                }
+                                                                Message msg = handler.obtainMessage();
+                                                                msg.setData(bun);
+                                                                handler.sendMessage(msg);
+                                                            }
+                                                        }.start();
+                                                    }
+                                                })
+                                                .setNegativeButton("취소", null);
+                                        urlDialog.show();
                                         break;
                                 }
                             }
@@ -494,6 +550,35 @@ public class AddMemoActivity extends AppCompatActivity {
         inputStream.close();
 
         imageInCacheName.add(fileName);
+    }
+
+    private boolean openImage(final String src) {
+        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+        File file = new File(getExternalCacheDir(), fileName);
+
+        try {
+            java.net.URL url = new java.net.URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+
+            String contentType = connection.getHeaderField("Content-Type");
+            if(!contentType.startsWith("image/")) {
+                return false;
+            }
+            InputStream input = connection.getInputStream();
+            byte[] strToByte = inputStreamToByteArray(input);
+
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(strToByte);
+            fos.close();
+            input.close();
+
+            imageInCacheName.add(fileName);
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
     }
 
     private void saveImage() {
