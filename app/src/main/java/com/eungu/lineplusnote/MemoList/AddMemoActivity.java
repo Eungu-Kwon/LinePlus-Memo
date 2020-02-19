@@ -612,17 +612,16 @@ public class AddMemoActivity extends AppCompatActivity {
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(path, options);
 
-        int width = options.outWidth;
-        int height = options.outHeight;
+        int orientation = getOrientationOfImage(path);
 
         options.inSampleSize = calculateInSampleSize(options, 100, 100);
         options.inJustDecodeBounds = false;
 
         Bitmap bmp = BitmapFactory.decodeFile(path, options);
 
-        if(height < width) {
+        if(orientation > 0) {
             Matrix matrix = new Matrix();
-            matrix.postRotate(90);
+            matrix.postRotate(orientation);
 
             Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
             bmp.recycle();
@@ -630,6 +629,33 @@ public class AddMemoActivity extends AppCompatActivity {
         }
 
         else return bmp;
+    }
+
+    public int getOrientationOfImage(String filepath) {
+        ExifInterface exif = null;
+
+        try {
+            exif = new ExifInterface(filepath);
+        } catch (IOException e) {
+            return -1;
+        }
+
+        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1);
+
+        if (orientation != -1) {
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    return 90;
+
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    return 180;
+
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    return 270;
+            }
+        }
+
+        return 0;
     }
 
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {

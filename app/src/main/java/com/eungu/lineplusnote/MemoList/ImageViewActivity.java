@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,6 +21,7 @@ import com.github.chrisbanes.photoview.PhotoView;
 
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class ImageViewActivity extends AppCompatActivity {
@@ -53,15 +55,17 @@ public class ImageViewActivity extends AppCompatActivity {
             }
         });
         bmp = BitmapFactory.decodeFile(getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + path);
-        pv.setImageDrawable(new BitmapDrawable(this.getResources(), getBmpFromUriWithRotate(bmp)));
+        pv.setImageDrawable(new BitmapDrawable(this.getResources(), getBmpWithRotate(bmp)));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
 
-    private Bitmap getBmpFromUriWithRotate(Bitmap bmp){
-        if(bmp.getHeight() < bmp.getWidth()) {
+    private Bitmap getBmpWithRotate(Bitmap bmp){
+        int orientation = getOrientationOfImage(path);
+
+        if(orientation > 0) {
             Matrix matrix = new Matrix();
-            matrix.postRotate(90);
+            matrix.postRotate(orientation);
 
             Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
             bmp.recycle();
@@ -69,6 +73,33 @@ public class ImageViewActivity extends AppCompatActivity {
         }
 
         else return bmp;
+    }
+
+    public int getOrientationOfImage(String filepath) {
+        ExifInterface exif = null;
+
+        try {
+            exif = new ExifInterface(filepath);
+        } catch (IOException e) {
+            return -1;
+        }
+
+        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1);
+
+        if (orientation != -1) {
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    return 90;
+
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    return 180;
+
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    return 270;
+            }
+        }
+
+        return 0;
     }
 
     private void hideSystemUI() {
