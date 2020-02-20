@@ -10,13 +10,15 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.eungu.lineplusnote.ImageCompute;
 import com.eungu.lineplusnote.MemoList.ImageViewActivity;
 import com.eungu.lineplusnote.R;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.ViewHolder>{
-    private ArrayList<ImageListItem> aData = null;
+    private ArrayList<File> aData = null;
     Context context;
     public class ViewHolder extends RecyclerView.ViewHolder{
         ImageView iv;
@@ -29,14 +31,14 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                 @Override
                 public void onClick(View v) {
                     Intent i = new Intent(v.getContext(), ImageViewActivity.class);
-                    i.putExtra("name", aData.get(getAdapterPosition()).getName());
+                    i.putExtra("path", aData.get(getAdapterPosition()).getAbsolutePath());
                     v.getContext().startActivity(i);
                 }
             });
         }
     }
 
-    public  ImageListAdapter(Context context, ArrayList<ImageListItem> list){
+    public  ImageListAdapter(Context context, ArrayList<File> list){
         this.context = context;
         aData = list;
     }
@@ -54,7 +56,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull final ImageListAdapter.ViewHolder viewHolder, int i) {
-        viewHolder.iv.setImageBitmap(aData.get(i).getImage());
+        viewHolder.iv.setImageBitmap(ImageCompute.getBmpFromUriWithResize(aData.get(i).getAbsolutePath(), 100));
     }
 
     @Override

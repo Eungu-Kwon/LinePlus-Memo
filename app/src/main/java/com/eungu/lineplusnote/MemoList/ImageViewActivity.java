@@ -30,7 +30,7 @@ public class ImageViewActivity extends AppCompatActivity {
         setContentView(R.layout.image_view_layout);
 
         Intent intent = getIntent();
-        fileName = intent.getExtras().getString("name", "");
+        fileName = intent.getExtras().getString("path", "");
 
         isFullmode = true;
         hideSystemUI();
@@ -51,10 +51,7 @@ public class ImageViewActivity extends AppCompatActivity {
             }
         });
 
-        imageFile = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + fileName);
-        if(imageFile == null || !imageFile.exists()) {
-            imageFile = new File(getExternalCacheDir() + "/" + fileName);
-        }
+        imageFile = new File(fileName);
 
         bmp = ImageCompute.getBmpFromPathWithRotate(imageFile.getAbsolutePath());
 

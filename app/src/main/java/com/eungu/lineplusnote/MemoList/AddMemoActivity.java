@@ -223,18 +223,18 @@ public class AddMemoActivity extends AppCompatActivity {
     private void setImageList(){
         int resizeSize = 100;
         RecyclerView imageList = findViewById(R.id.image_list);
-        ArrayList<ImageListItem> imageListItems = new ArrayList<>();
+        ArrayList<File> imageListItems = new ArrayList<>();
         for(int i = 0; i < imageName.size(); ++i) {
             File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
             if(file != null){
-                imageListItems.add(new ImageListItem(ImageCompute.getBmpFromUriWithResize(file.getAbsolutePath(), resizeSize), imageName.get(i)));
+                imageListItems.add(file);
             }
         }
 
         for(int i = 0; i < imageInCacheName.size(); ++i) {
             File fileInCache = new File(getExternalCacheDir(), imageInCacheName.get(i));
             if(fileInCache != null){
-                imageListItems.add(new ImageListItem(ImageCompute.getBmpFromUriWithResize(fileInCache.getAbsolutePath(), resizeSize), imageInCacheName.get(i)));
+                imageListItems.add(fileInCache);
             }
         }
 
