@@ -1,15 +1,19 @@
 package com.eungu.lineplusnote.MemoList;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,10 +24,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -45,6 +53,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 public class AddMemoActivity extends AppCompatActivity {
+    static final int REQUEST_TAKE_PHOTO = 1;
+    static final int MY_PERMISSIONS_REQUEST_CAMERA = 123;
+    String currentPhotoPath, imageNameBuffer;
+
     EditText title_edit = null;
     EditText content_edit = null;
     Button add_image_button = null;
@@ -116,7 +128,7 @@ public class AddMemoActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int pos) {
                                 switch (pos){
                                     case 0:
-                                        //TODO add camera system
+                                        callCameraActivity();
                                         break;
                                     case 1:
                                         Intent i = new Intent();
@@ -125,39 +137,7 @@ public class AddMemoActivity extends AppCompatActivity {
                                         startActivityForResult(Intent.createChooser(i, "이미지 추가"), 100);
                                         break;
                                     case 2:
-                                        final EditText editText = new EditText(AddMemoActivity.this);
-                                        final ConstraintLayout container = new ConstraintLayout(AddMemoActivity.this);
-                                        final ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                                        params.leftMargin = getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
-                                        params.rightMargin =getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
-                                        editText.setLayoutParams(params);
-                                        container.addView(editText);
-
-                                        AlertDialog.Builder urlDialog = new AlertDialog.Builder(AddMemoActivity.this);
-                                        urlDialog.setView(container)
-                                                .setTitle("URL 입력")
-                                                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                                        new Thread(){
-                                                            @Override
-                                                            public void run() {
-                                                                Bundle bun = new Bundle();
-                                                                if(openImage(editText.getText().toString())){
-                                                                    bun.putString("RESULT", "OK");
-                                                                }
-                                                                else{
-                                                                    bun.putString("RESULT", "FAIL");
-                                                                }
-                                                                Message msg = handler.obtainMessage();
-                                                                msg.setData(bun);
-                                                                handler.sendMessage(msg);
-                                                            }
-                                                        }.start();
-                                                    }
-                                                })
-                                                .setNegativeButton("취소", null);
-                                        urlDialog.show();
+                                        downloadAndSetImageFromURL();
                                         break;
                                 }
                             }
@@ -176,6 +156,54 @@ public class AddMemoActivity extends AppCompatActivity {
         }
         imageInCacheName = new ArrayList<>();
         isModified = false;
+    }
+
+    private void downloadAndSetImageFromURL() {
+        final EditText editText = new EditText(AddMemoActivity.this);
+        final ConstraintLayout container = new ConstraintLayout(AddMemoActivity.this);
+        final ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
+        params.rightMargin =getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
+        editText.setLayoutParams(params);
+        container.addView(editText);
+
+        AlertDialog.Builder urlDialog = new AlertDialog.Builder(AddMemoActivity.this);
+        urlDialog.setView(container)
+                .setTitle("URL 입력")
+                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        new Thread(){
+                            @Override
+                            public void run() {
+                                Bundle bun = new Bundle();
+                                if(openImage(editText.getText().toString())){
+                                    bun.putString("RESULT", "OK");
+                                }
+                                else{
+                                    bun.putString("RESULT", "FAIL");
+                                }
+                                Message msg = handler.obtainMessage();
+                                msg.setData(bun);
+                                handler.sendMessage(msg);
+                            }
+                        }.start();
+                    }
+                })
+                .setNegativeButton("취소", null);
+        urlDialog.show();
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+        String imageFileName = "CAM" + timeStamp;
+        File storageDir = getExternalCacheDir();
+        File image = new File(storageDir + "/" + imageFileName + ".jpg");
+
+        // Save a file: path for use with ACTION_VIEW intents
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
     }
 
     private void inputEditData(){
@@ -508,6 +536,58 @@ public class AddMemoActivity extends AppCompatActivity {
             }
             isModified = true;
         }
+        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            if(imageNameBuffer != null && !imageNameBuffer.equals("")) imageInCacheName.add(imageNameBuffer);
+        }
+    }
+
+    private void callCameraActivity(){
+        if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(AddMemoActivity.this, Manifest.permission.CAMERA)) {
+                AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
+                oDialog.setTitle("권한 요청")
+                        .setMessage("카메라를 이용하기 위해 권한이 필요합니다.")
+                        .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                ActivityCompat.requestPermissions(AddMemoActivity.this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
+                            }
+                        })
+                        .setCancelable(false)
+                        .show();
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
+            }
+        }
+        else{
+            dispatchTakePictureIntent();
+        }
+    }
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.eungu.lineplusnote.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+                imageNameBuffer = photoFile.getName();
+            }
+        }
     }
 
     public static byte[] inputStreamToByteArray(InputStream is) {
@@ -576,4 +656,16 @@ public class AddMemoActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case MY_PERMISSIONS_REQUEST_CAMERA:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    dispatchTakePictureIntent();
+                } else {
+                    Toast.makeText(getApplicationContext(), "카메라 권한이 없어 사진을 찍을 수 없습니다.", Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
+    }
 }

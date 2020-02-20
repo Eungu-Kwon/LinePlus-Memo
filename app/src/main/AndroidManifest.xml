@@ -4,6 +4,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera"
+        android:required="true"/>
 
     <application
         android:allowBackup="true"
@@ -22,6 +25,16 @@
         <activity android:name=".MemoList.AddMemoActivity"
             android:windowSoftInputMode="adjustResize"></activity>
         <activity android:name=".MemoList.ImageViewActivity"></activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.eungu.lineplusnote.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
     </application>
 
 </manifest>
