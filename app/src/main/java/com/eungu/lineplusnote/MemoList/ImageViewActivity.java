@@ -2,39 +2,35 @@ package com.eungu.lineplusnote.MemoList;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
-import android.media.ExifInterface;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.MenuItem;
 import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.eungu.lineplusnote.ImageCompute;
 import com.eungu.lineplusnote.R;
 import com.github.chrisbanes.photoview.PhotoView;
 
-import java.io.BufferedInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.File;
 
 public class ImageViewActivity extends AppCompatActivity {
-    String path;
-    boolean isFullmode;
-    Bitmap bmp;
+
+    private String fileName;
+    private File imageFile;
+    private boolean isFullmode;
+    private Bitmap bmp;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.image_view_layout);
 
         Intent intent = getIntent();
-        path = intent.getExtras().getString("path", "");
+        fileName = intent.getExtras().getString("name", "");
 
         isFullmode = true;
         hideSystemUI();
@@ -54,52 +50,17 @@ public class ImageViewActivity extends AppCompatActivity {
                 }
             }
         });
-        bmp = BitmapFactory.decodeFile(getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + path);
-        pv.setImageDrawable(new BitmapDrawable(this.getResources(), getBmpWithRotate(bmp)));
+
+        imageFile = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + fileName);
+        if(imageFile == null || !imageFile.exists()) {
+            imageFile = new File(getExternalCacheDir() + "/" + fileName);
+        }
+
+        bmp = ImageCompute.getBmpFromPathWithRotate(imageFile.getAbsolutePath());
+
+        pv.setImageDrawable(new BitmapDrawable(this.getResources(), bmp));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-    }
-
-    private Bitmap getBmpWithRotate(Bitmap bmp){
-        int orientation = getOrientationOfImage(path);
-
-        if(orientation > 0) {
-            Matrix matrix = new Matrix();
-            matrix.postRotate(orientation);
-
-            Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
-            bmp.recycle();
-            return resizedBitmap;
-        }
-
-        else return bmp;
-    }
-
-    public int getOrientationOfImage(String filepath) {
-        ExifInterface exif = null;
-
-        try {
-            exif = new ExifInterface(filepath);
-        } catch (IOException e) {
-            return -1;
-        }
-
-        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1);
-
-        if (orientation != -1) {
-            switch (orientation) {
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    return 90;
-
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    return 180;
-
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    return 270;
-            }
-        }
-
-        return 0;
     }
 
     private void hideSystemUI() {

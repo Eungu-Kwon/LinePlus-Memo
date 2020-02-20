@@ -3,10 +3,6 @@ package com.eungu.lineplusnote.MemoList;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,7 +10,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,13 +29,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
+import com.eungu.lineplusnote.ImageCompute;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListItem;
 import com.eungu.lineplusnote.R;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -130,7 +125,6 @@ public class AddMemoActivity extends AppCompatActivity {
                                         startActivityForResult(Intent.createChooser(i, "이미지 추가"), 100);
                                         break;
                                     case 2:
-                                        //TODO make add image from URL
                                         final EditText editText = new EditText(AddMemoActivity.this);
                                         final ConstraintLayout container = new ConstraintLayout(AddMemoActivity.this);
                                         final ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -190,7 +184,7 @@ public class AddMemoActivity extends AppCompatActivity {
 
         title_edit.setText(data.getTitle());
         content_edit.setText(data.getContent());
-        imageName = imageListStringToArray(data.getImageList());
+        imageName = ImageCompute.imageListStringToArray(data.getImageList());
     }
 
     private void setToolbar(){
@@ -199,19 +193,20 @@ public class AddMemoActivity extends AppCompatActivity {
     }
 
     private void setImageList(){
+        int resizeSize = 100;
         RecyclerView imageList = findViewById(R.id.image_list);
         ArrayList<ImageListItem> imageListItems = new ArrayList<>();
         for(int i = 0; i < imageName.size(); ++i) {
             File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
             if(file != null){
-                imageListItems.add(new ImageListItem(getBmpFromUriWithResize(file.getAbsolutePath()), imageName.get(i)));
+                imageListItems.add(new ImageListItem(ImageCompute.getBmpFromUriWithResize(file.getAbsolutePath(), resizeSize), imageName.get(i)));
             }
         }
 
         for(int i = 0; i < imageInCacheName.size(); ++i) {
             File fileInCache = new File(getExternalCacheDir(), imageInCacheName.get(i));
             if(fileInCache != null){
-                imageListItems.add(new ImageListItem(getBmpFromUriWithResize(fileInCache.getAbsolutePath()), imageInCacheName.get(i)));
+                imageListItems.add(new ImageListItem(ImageCompute.getBmpFromUriWithResize(fileInCache.getAbsolutePath(), resizeSize), imageInCacheName.get(i)));
             }
         }
 
@@ -353,12 +348,12 @@ public class AddMemoActivity extends AppCompatActivity {
         if(canSave != 0){
             return false;
         }
-        saveImage();
+        ImageCompute.saveImageFromCache(this);
         isModified = false;
         isSaved = true;
         imageName.addAll(imageInCacheName);
         imageInCacheName.clear();
-        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString(), imageListArrayToString(imageName));
+        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString(), ImageCompute.imageListArrayToString(imageName));
         DBManager dbManager = new DBManager(getApplicationContext());
         if(dbIdx == -1) {
             dbIdx = dbManager.getItemsCount();
@@ -581,126 +576,4 @@ public class AddMemoActivity extends AppCompatActivity {
         return true;
     }
 
-    private void saveImage() {
-        //TODO make run in new Thread
-        File[] files = getExternalCacheDir().listFiles();
-        for(File f : files){
-            copyFile(f, getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + f.getName());
-        }
-    }
-
-    private static ArrayList<String> imageListStringToArray(String str){
-        ArrayList<String> list = new ArrayList<>();
-        String[] str_list = str.split(",");
-        for(String i : str_list){
-            if (i == null || i.equals("")) continue;
-            list.add(i);
-        }
-        return list;
-    }
-
-    private static String imageListArrayToString(ArrayList<String> arr){
-        String str = "";
-        for(String i : arr){
-            str += i + ",";
-        }
-        return str;
-    }
-
-    private Bitmap getBmpFromUriWithResize(String path){
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
-
-        int orientation = getOrientationOfImage(path);
-
-        options.inSampleSize = calculateInSampleSize(options, 100, 100);
-        options.inJustDecodeBounds = false;
-
-        Bitmap bmp = BitmapFactory.decodeFile(path, options);
-
-        if(orientation > 0) {
-            Matrix matrix = new Matrix();
-            matrix.postRotate(orientation);
-
-            Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
-            bmp.recycle();
-            return resizedBitmap;
-        }
-
-        else return bmp;
-    }
-
-    public int getOrientationOfImage(String filepath) {
-        ExifInterface exif = null;
-
-        try {
-            exif = new ExifInterface(filepath);
-        } catch (IOException e) {
-            return -1;
-        }
-
-        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1);
-
-        if (orientation != -1) {
-            switch (orientation) {
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    return 90;
-
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    return 180;
-
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    return 270;
-            }
-        }
-
-        return 0;
-    }
-
-    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-            // height and width larger than the requested height and width.
-            while ((halfHeight / inSampleSize) >= reqHeight
-                    && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-
-        return inSampleSize;
-    }
-
-    private boolean copyFile(File file , String save_file){
-        boolean result;
-        if(file != null && file.exists()){
-            try {
-                FileInputStream fis = new FileInputStream(file);
-                FileOutputStream newfos = new FileOutputStream(save_file);
-
-                int readcount=0;
-                byte[] buffer = new byte[1024];
-                while((readcount = fis.read(buffer,0,1024))!= -1){
-                    newfos.write(buffer,0,readcount);
-                }
-                newfos.close();
-                fis.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            result = true;
-        }else{
-            result = false;
-        }
-        return result;
-    }
 }
