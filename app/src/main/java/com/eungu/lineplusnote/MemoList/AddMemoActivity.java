@@ -327,14 +327,19 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if (path == null) {
             for(int i = 0; i < imageName.size(); ++i) {
                 File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
-                if(!file.exists()) file = new File(getExternalCacheDir(), imageName.get(i));
-                file.delete();
+                File iconFile = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i) + "_icon");
+                if(file.exists()){
+                    file.delete();
+                    iconFile.delete();
+                }
             }
         }
         else{
             File file = new File(path);
+            File iconFile = new File(path + "_icon");
             imageName.remove(file.getName());
             file.delete();
+            iconFile.delete();
         }
     }
 
