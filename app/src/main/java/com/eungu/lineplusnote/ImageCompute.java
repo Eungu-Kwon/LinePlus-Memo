@@ -97,8 +97,13 @@ public class ImageCompute {
     }
 
     public static Bitmap getBmpFromPathWithRotate(String path){
-        Bitmap bmp = BitmapFactory.decodeFile(path);
-        int orientation = getOrientationOfImage(path);
+        if(path == null) return null;
+
+        File f = new File(path);
+        if(!f.exists()) return null;
+
+        Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
+        int orientation = getOrientationOfImage(f.getAbsolutePath());
 
         if(orientation > 0) {
             Matrix matrix = new Matrix();
@@ -114,16 +119,21 @@ public class ImageCompute {
     }
 
     public static Bitmap getBmpFromPathWithResize(String path, int size){
+        if(path == null) return null;
+        
+        File f = new File(path);
+        if(!f.exists()) return null;
+
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
+        BitmapFactory.decodeFile(f.getAbsolutePath(), options);
 
         int orientation = getOrientationOfImage(path);
 
         if(size != NO_RESIZE) options.inSampleSize = ImageCompute.calculateInSampleSize(options, size, size);
         options.inJustDecodeBounds = false;
 
-        Bitmap bmp = BitmapFactory.decodeFile(path, options);
+        Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath(), options);
 
         if(orientation > 0) {
             Matrix matrix = new Matrix();

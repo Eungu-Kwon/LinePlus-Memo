@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
+import com.eungu.lineplusnote.ImageCompute;
 import com.eungu.lineplusnote.MemoList.AddMemoActivity;
 import com.eungu.lineplusnote.MemoList.MainActivity;
 import com.eungu.lineplusnote.R;
@@ -24,9 +26,11 @@ public class MemoListAdapter extends RecyclerView.Adapter<MemoListAdapter.ViewHo
     Context context;
     public class ViewHolder extends RecyclerView.ViewHolder{
         TextView text_title, text_content, text_date;
+        ImageView thumbnailImage;
         ViewHolder(View itemView) {
             super(itemView) ;
 
+            thumbnailImage = itemView.findViewById(R.id.l_item_image);
             text_title = itemView.findViewById(R.id.l_item_title);
             text_content = itemView.findViewById(R.id.l_item_content);
             text_date = itemView.findViewById(R.id.l_item_date);
@@ -65,9 +69,12 @@ public class MemoListAdapter extends RecyclerView.Adapter<MemoListAdapter.ViewHo
         final DBManager dbManager = new DBManager(context);
         final DBData data = dbManager.getData(idx);
         if(data == null) return;
+
         String title = aData.get(i).getTitle();
         String content = aData.get(i).getContent();
         String time = aData.get(i).getDate();
+
+        viewHolder.thumbnailImage.setImageBitmap(ImageCompute.getBmpFromPathWithRotate(aData.get(i).getThumbnailPath()));
         viewHolder.text_title.setText(title);
         viewHolder.text_content.setText(content);
         viewHolder.text_date.setText(time);

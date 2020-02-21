@@ -4,6 +4,7 @@ public class MemoListItem {
     private String Title;
     private String Content;
     private String date;
+    private String thumbnailPath;
 
     public String getTitle() {
         if(Title == null) return "";
@@ -30,5 +31,13 @@ public class MemoListItem {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public String getThumbnailPath() {
+        return thumbnailPath;
+    }
+
+    public void setthumbnailPath(String thumbnailPath) {
+        this.thumbnailPath = thumbnailPath;
     }
 }
