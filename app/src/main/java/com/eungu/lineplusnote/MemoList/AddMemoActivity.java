@@ -80,6 +80,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_or_modify_memo);
 
+        ImageCompute.deleteCache(this);
+
         handler = new Handler() {
             public void handleMessage(Message msg) {
                 Bundle bun = msg.getData();
@@ -530,15 +532,6 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                     changeToReadOnlyMode();
                 }
             }
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        File[] files = getExternalCacheDir().listFiles();
-        for(File f : files){
-            if(f.exists()) f.delete();
         }
     }
 

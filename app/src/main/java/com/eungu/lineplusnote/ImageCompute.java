@@ -163,6 +163,13 @@ public class ImageCompute {
         }
     }
 
+    public static void deleteCache(Context c){
+        File[] files = c.getExternalCacheDir().listFiles();
+        for(File f : files){
+            if(f.exists()) f.delete();
+        }
+    }
+
     public static byte[] inputStreamToByteArray(InputStream is) {
 
         byte[] resBytes = null;
