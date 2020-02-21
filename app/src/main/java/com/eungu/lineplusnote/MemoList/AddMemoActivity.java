@@ -41,12 +41,8 @@ import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListListener;
 import com.eungu.lineplusnote.R;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -572,6 +568,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
             if(imageNameBuffer != null && !imageNameBuffer.equals("")) {
                 imageInCacheName.add(imageNameBuffer);
+                ImageCompute.saveImageIcon(this, new File(getExternalCacheDir().getAbsolutePath() + "/" + imageNameBuffer));
                 isModified = true;
             }
         }

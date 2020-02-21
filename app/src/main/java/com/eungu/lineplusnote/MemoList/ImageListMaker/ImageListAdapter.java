@@ -2,6 +2,7 @@ package com.eungu.lineplusnote.MemoList.ImageListMaker;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,7 +75,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull final ImageListAdapter.ViewHolder viewHolder, int i) {
-        viewHolder.iv.setImageBitmap(ImageCompute.getBmpFromUriWithResize(aData.get(i).getAbsolutePath(), 100));
+        viewHolder.iv.setImageBitmap(BitmapFactory.decodeFile(aData.get(i).getAbsolutePath() + "_icon"));
         if(isEditingMode){
             viewHolder.imageDeleteView.setVisibility(View.VISIBLE);
         }

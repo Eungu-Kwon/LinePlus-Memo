@@ -113,7 +113,7 @@ public class ImageCompute {
         else return bmp;
     }
 
-    public static Bitmap getBmpFromUriWithResize(String path, int size){
+    public static Bitmap getBmpFromPathWithResize(String path, int size){
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(path, options);
@@ -192,6 +192,7 @@ public class ImageCompute {
         return resBytes;
     }
 
+    //open Image from internet
     public static String openImage(Context c, final String src) {
         String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
         File file = new File(c.getExternalCacheDir(), fileName);
@@ -217,6 +218,8 @@ public class ImageCompute {
         } catch (IOException e) {
             return null;
         }
+
+        saveImageIcon(c, file);
         return fileName;
     }
 
@@ -232,6 +235,23 @@ public class ImageCompute {
         fos.close();
         inputStream.close();
 
+        saveImageIcon(c, file);
+
         return fileName;
+    }
+
+    public static void saveImageIcon(Context c, File f){
+        String iconFile;
+        iconFile = c.getExternalCacheDir().getAbsolutePath() + "/" + f.getName() + "_icon";
+        File tempFile = new File(iconFile);
+        try {
+            FileOutputStream out = new FileOutputStream(tempFile);
+            Bitmap bmp = getBmpFromPathWithResize(f.getAbsolutePath(), 100);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 20, out);
+            out.close();
+            bmp.recycle();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
