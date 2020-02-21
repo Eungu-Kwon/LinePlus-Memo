@@ -11,4 +11,10 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         app:srcCompat="@drawable/ic_launcher_foreground" />
+
+    <ImageView
+        android:id="@+id/image_list_delete"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:srcCompat="@drawable/ic_clear_black_24dp" />
 </FrameLayout>

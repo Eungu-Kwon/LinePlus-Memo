@@ -38,6 +38,7 @@ import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
 import com.eungu.lineplusnote.ImageCompute;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
+import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListListener;
 import com.eungu.lineplusnote.R;
 
 import java.io.ByteArrayOutputStream;
@@ -50,7 +51,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-public class AddMemoActivity extends AppCompatActivity {
+public class AddMemoActivity extends AppCompatActivity implements ImageListListener {
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int MY_PERMISSIONS_REQUEST_CAMERA = 123;
     String currentPhotoPath, imageNameBuffer;
@@ -84,6 +85,7 @@ public class AddMemoActivity extends AppCompatActivity {
                 Bundle bun = msg.getData();
                 String result = bun.getString("RESULT");
                 if(result == "OK"){
+                    isModified = true;
                     initImageList();
                 }
                 else if(result == "FAIL"){
@@ -228,7 +230,8 @@ public class AddMemoActivity extends AppCompatActivity {
         imageName = new ArrayList<>();
         imageInCacheName = new ArrayList<>();
 
-        imageListAdapter = new ImageListAdapter(this, imageListItems);
+        imageListAdapter = new ImageListAdapter(this, imageListItems, (dbIdx == -1));
+        imageListAdapter.setListener(this);
         imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         imageList.setAdapter(imageListAdapter);
 
@@ -236,6 +239,7 @@ public class AddMemoActivity extends AppCompatActivity {
     }
 
     private void setImageList() {
+        imageListItems.clear();
         for(int i = 0; i < imageName.size(); ++i) {
             File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
             if(file != null){
@@ -252,19 +256,38 @@ public class AddMemoActivity extends AppCompatActivity {
         imageListAdapter.notifyDataSetChanged();
     }
 
-    private void deleteImage(String name){
+    private void deleteImage(String path){
         if(imageName.isEmpty()) return;
 
-        if (name == null) {
+        if (path == null) {
             for(int i = 0; i < imageName.size(); ++i) {
                 File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
+                if(!file.exists()) file = new File(getExternalCacheDir(), imageName.get(i));
                 file.delete();
             }
         }
         else{
-            File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), name);
+            File file = new File(path);
+            imageName.remove(file.getName());
             file.delete();
         }
+    }
+
+    @Override
+    public void onClickedItem(final String path) {
+        AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+                .setTitle("이미지 삭제")
+                .setPositiveButton("예", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        deleteImage(path);
+                        imageListAdapter.notifyDataSetChanged();
+                        isModified = true;
+                    }
+                })
+                .setNeutralButton("아니요", null)
+                .setCancelable(false);
+        oDialog.show();
     }
 
     @Override
@@ -341,6 +364,8 @@ public class AddMemoActivity extends AppCompatActivity {
         content_edit.setFocusable(false);
         add_image_button.setVisibility(View.GONE);
         isReadOnly = true;
+        imageListAdapter.setEditingMode(false);
+        imageListAdapter.notifyDataSetChanged();
     }
 
     private void changeToWritableMode(){
@@ -348,13 +373,17 @@ public class AddMemoActivity extends AppCompatActivity {
         content_edit.setFocusableInTouchMode(true);
         title_edit.setFocusable(true);
         content_edit.setFocusable(true);
+
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         title_edit.requestFocus();
         imm.showSoftInput(title_edit, InputMethodManager.SHOW_IMPLICIT);
+
         add_image_button.setVisibility(View.VISIBLE);
         edit_menu.setVisible(false);
         save_menu.setVisible(true);
         isReadOnly = false;
+        imageListAdapter.setEditingMode(true);
+        imageListAdapter.notifyDataSetChanged();
     }
 
     private int checkCanSave(){
@@ -540,13 +569,16 @@ public class AddMemoActivity extends AppCompatActivity {
             Uri uri = data.getData();
             try {
                 openImage(uri);
+                isModified = true;
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            isModified = true;
         }
         if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
-            if(imageNameBuffer != null && !imageNameBuffer.equals("")) imageInCacheName.add(imageNameBuffer);
+            if(imageNameBuffer != null && !imageNameBuffer.equals("")) {
+                imageInCacheName.add(imageNameBuffer);
+                isModified = true;
+            }
         }
     }
 
