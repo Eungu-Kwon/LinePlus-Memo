@@ -13,7 +13,6 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +38,6 @@ import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
 import com.eungu.lineplusnote.ImageCompute;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
-import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListItem;
 import com.eungu.lineplusnote.R;
 
 import java.io.ByteArrayOutputStream;
@@ -72,6 +70,9 @@ public class AddMemoActivity extends AppCompatActivity {
 
     private ArrayList<String> imageName;
     private ArrayList<String> imageInCacheName;
+    ArrayList<File> imageListItems;
+
+    ImageListAdapter imageListAdapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -83,7 +84,7 @@ public class AddMemoActivity extends AppCompatActivity {
                 Bundle bun = msg.getData();
                 String result = bun.getString("RESULT");
                 if(result == "OK"){
-                    setImageList();
+                    initImageList();
                 }
                 else if(result == "FAIL"){
                     AlertDialog.Builder errorDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)
@@ -146,15 +147,16 @@ public class AddMemoActivity extends AppCompatActivity {
             }
         });
 
+        initImageList();
+
         if(dbIdx != -1){
             inputEditData();
             isReadOnly = true;
         }
         else {
             isReadOnly = false;
-            imageName = new ArrayList<>();
         }
-        imageInCacheName = new ArrayList<>();
+
         isModified = false;
     }
 
@@ -220,10 +222,20 @@ public class AddMemoActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
 
-    private void setImageList(){
-        int resizeSize = 100;
+    private void initImageList(){
         RecyclerView imageList = findViewById(R.id.image_list);
-        ArrayList<File> imageListItems = new ArrayList<>();
+        imageListItems = new ArrayList<>();
+        imageName = new ArrayList<>();
+        imageInCacheName = new ArrayList<>();
+
+        imageListAdapter = new ImageListAdapter(this, imageListItems);
+        imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        imageList.setAdapter(imageListAdapter);
+
+        setImageList();
+    }
+
+    private void setImageList() {
         for(int i = 0; i < imageName.size(); ++i) {
             File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
             if(file != null){
@@ -237,10 +249,7 @@ public class AddMemoActivity extends AppCompatActivity {
                 imageListItems.add(fileInCache);
             }
         }
-
-        ImageListAdapter imageListAdapter = new ImageListAdapter(this, imageListItems);
-        imageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        imageList.setAdapter(imageListAdapter);
+        imageListAdapter.notifyDataSetChanged();
     }
 
     private void deleteImage(String name){
