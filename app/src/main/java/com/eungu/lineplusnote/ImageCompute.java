@@ -5,13 +5,19 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Environment;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class ImageCompute {
 
@@ -155,5 +161,70 @@ public class ImageCompute {
         for(File f : files){
             ImageCompute.copyFile(f, c.getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + f.getName());
         }
+    }
+
+    public static byte[] inputStreamToByteArray(InputStream is) {
+
+        byte[] resBytes = null;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        byte[] buffer = new byte[1024];
+        int read = -1;
+        try {
+            while ( (read = is.read(buffer)) != -1 ) {
+                bos.write(buffer, 0, read);
+            }
+
+            resBytes = bos.toByteArray();
+            bos.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return resBytes;
+    }
+
+    public static String openImage(Context c, final String src) {
+        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+        File file = new File(c.getExternalCacheDir(), fileName);
+
+        try {
+            java.net.URL url = new java.net.URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+
+            String contentType = connection.getHeaderField("Content-Type");
+            if(!contentType.startsWith("image/")) {
+                return null;
+            }
+            InputStream input = connection.getInputStream();
+            byte[] strToByte = inputStreamToByteArray(input);
+
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(strToByte);
+            fos.close();
+            input.close();
+
+        } catch (IOException e) {
+            return null;
+        }
+        return fileName;
+    }
+
+    public static String openImage(Context c, Uri uri) throws IOException {
+        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+        InputStream inputStream = c.getContentResolver().openInputStream(uri);
+        byte[] strToByte = inputStreamToByteArray(inputStream);
+
+        File file = new File(c.getExternalCacheDir(), fileName);
+
+        FileOutputStream fos = new FileOutputStream(file);
+        fos.write(strToByte);
+        fos.close();
+        inputStream.close();
+
+        return fileName;
     }
 }

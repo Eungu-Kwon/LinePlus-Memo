@@ -180,9 +180,11 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                         new Thread(){
                             @Override
                             public void run() {
+                                String result = ImageCompute.openImage(getApplicationContext(), editText.getText().toString());
                                 Bundle bun = new Bundle();
-                                if(openImage(editText.getText().toString())){
+                                if(result != null){
                                     bun.putString("RESULT", "OK");
+                                    imageInCacheName.add(result);
                                 }
                                 else{
                                     bun.putString("RESULT", "FAIL");
@@ -568,7 +570,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(requestCode == 100 && resultCode == RESULT_OK){
             Uri uri = data.getData();
             try {
-                openImage(uri);
+                imageInCacheName.add(ImageCompute.openImage(this, uri));
                 isModified = true;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -629,72 +631,6 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                 imageNameBuffer = photoFile.getName();
             }
         }
-    }
-
-    public static byte[] inputStreamToByteArray(InputStream is) {
-
-        byte[] resBytes = null;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
-        byte[] buffer = new byte[1024];
-        int read = -1;
-        try {
-            while ( (read = is.read(buffer)) != -1 ) {
-                bos.write(buffer, 0, read);
-            }
-
-            resBytes = bos.toByteArray();
-            bos.close();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return resBytes;
-    }
-
-    private void openImage(Uri uri) throws IOException {
-        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
-        InputStream inputStream = getContentResolver().openInputStream(uri);
-        byte[] strToByte = inputStreamToByteArray(inputStream);
-
-        File file = new File(getExternalCacheDir(), fileName);
-
-        FileOutputStream fos = new FileOutputStream(file);
-        fos.write(strToByte);
-        fos.close();
-        inputStream.close();
-
-        imageInCacheName.add(fileName);
-    }
-
-    private boolean openImage(final String src) {
-        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
-        File file = new File(getExternalCacheDir(), fileName);
-
-        try {
-            java.net.URL url = new java.net.URL(src);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setDoInput(true);
-            connection.connect();
-
-            String contentType = connection.getHeaderField("Content-Type");
-            if(!contentType.startsWith("image/")) {
-                return false;
-            }
-            InputStream input = connection.getInputStream();
-            byte[] strToByte = inputStreamToByteArray(input);
-
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(strToByte);
-            fos.close();
-            input.close();
-
-            imageInCacheName.add(fileName);
-        } catch (IOException e) {
-            return false;
-        }
-        return true;
     }
 
     @Override
