@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -141,10 +142,26 @@ public class ImageCompute {
 
             Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
             bmp.recycle();
-            return resizedBitmap;
+            bmp = resizedBitmap;
         }
 
-        else return bmp;
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+        int offsetX = 0;
+        int offsetY = 0;
+
+        if(width > height){
+            offsetX = (width - height) / 2;
+            width = height;
+        }
+        else if(width < height){
+            offsetY = (height - width) / 2;
+            height = width;
+        }
+
+        Bitmap croppedBmp = Bitmap.createBitmap(bmp, offsetX, offsetY, width, height);
+        bmp.recycle();
+        return croppedBmp;
     }
 
     public static ArrayList<String> imageListStringToArray(String str){
@@ -256,7 +273,7 @@ public class ImageCompute {
         File tempFile = new File(iconFile);
         try {
             FileOutputStream out = new FileOutputStream(tempFile);
-            Bitmap bmp = getBmpFromPathWithResize(f.getAbsolutePath(), 100);
+            Bitmap bmp = getBmpFromPathWithResize(f.getAbsolutePath(), 200);
             bmp.compress(Bitmap.CompressFormat.JPEG, 20, out);
             out.close();
             bmp.recycle();
