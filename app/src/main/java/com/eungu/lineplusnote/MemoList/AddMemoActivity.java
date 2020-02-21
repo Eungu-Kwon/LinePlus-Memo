@@ -84,7 +84,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                 String result = bun.getString("RESULT");
                 if(result == "OK"){
                     isModified = true;
-                    initImageList();
+                    setImageList();
                 }
                 else if(result == "FAIL"){
                     AlertDialog.Builder errorDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)
