@@ -254,4 +254,13 @@ public class ImageCompute {
             e.printStackTrace();
         }
     }
+
+    public static File createImageFile(Context c) {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+        String imageFileName = "CAM" + timeStamp;
+        File storageDir = c.getExternalCacheDir();
+        File image = new File(storageDir + "/" + imageFileName + ".jpg");
+        return image;
+    }
 }

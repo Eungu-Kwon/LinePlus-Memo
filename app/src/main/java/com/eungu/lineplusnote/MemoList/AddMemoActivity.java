@@ -43,14 +43,14 @@ import com.eungu.lineplusnote.R;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-public class AddMemoActivity extends AppCompatActivity implements ImageListListener {
+public class AddMemoActivity extends AppCompatActivity implements ImageListListener, View.OnClickListener {
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int MY_PERMISSIONS_REQUEST_CAMERA = 123;
-    String currentPhotoPath, imageNameBuffer;
+    private static final int ADD_IMAGE_FROM_GALLERY = 100;
+    String imageNameBuffer;
 
     EditText title_edit = null;
     EditText content_edit = null;
@@ -97,17 +97,11 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         };
 
         initView();
-        setToolbar();
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if(!imageName.isEmpty() || !imageInCacheName.isEmpty()) {
-            setImageList();
-        }
-    }
-
+    // 뷰 초기 설정
     private void initView(){
         Intent intent = getIntent();
         dbIdx = intent.getExtras().getInt("idx", -1);
@@ -118,34 +112,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         content_edit.addTextChangedListener(watcher);
         add_image_button = findViewById(R.id.edit_add_image);
 
-        add_image_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                hideKeyboard();
-                final CharSequence[] items =  {"사진 촬영", "갤러리에서 선택", "URL에서 선택"};
-                AlertDialog.Builder oDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)
-                        .setTitle("이미지 불러오기")
-                        .setItems(items, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int pos) {
-                                switch (pos){
-                                    case 0:
-                                        callCameraActivity();
-                                        break;
-                                    case 1:
-                                        Intent i = new Intent();
-                                        i.setType("image/*");
-                                        i.setAction(Intent.ACTION_GET_CONTENT);
-                                        startActivityForResult(Intent.createChooser(i, "이미지 추가"), 100);
-                                        break;
-                                    case 2:
-                                        downloadAndSetImageFromURL();
-                                        break;
-                                }
-                            }
-                        });
-                oDialog.show();
-            }
-        });
+        add_image_button.setOnClickListener(this);
 
         initImageList();
 
@@ -160,56 +127,6 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         isModified = false;
     }
 
-    private void downloadAndSetImageFromURL() {
-        final EditText editText = new EditText(AddMemoActivity.this);
-        final ConstraintLayout container = new ConstraintLayout(AddMemoActivity.this);
-        final ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
-        params.rightMargin =getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
-        editText.setLayoutParams(params);
-        container.addView(editText);
-
-        AlertDialog.Builder urlDialog = new AlertDialog.Builder(AddMemoActivity.this);
-        urlDialog.setView(container)
-                .setTitle("URL 입력")
-                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        new Thread(){
-                            @Override
-                            public void run() {
-                                String result = ImageCompute.openImage(getApplicationContext(), editText.getText().toString());
-                                Bundle bun = new Bundle();
-                                if(result != null){
-                                    bun.putString("RESULT", "OK");
-                                    imageInCacheName.add(result);
-                                }
-                                else{
-                                    bun.putString("RESULT", "FAIL");
-                                }
-                                Message msg = handler.obtainMessage();
-                                msg.setData(bun);
-                                handler.sendMessage(msg);
-                            }
-                        }.start();
-                    }
-                })
-                .setNegativeButton("취소", null);
-        urlDialog.show();
-    }
-
-    private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
-        String imageFileName = "CAM" + timeStamp;
-        File storageDir = getExternalCacheDir();
-        File image = new File(storageDir + "/" + imageFileName + ".jpg");
-
-        // Save a file: path for use with ACTION_VIEW intents
-        currentPhotoPath = image.getAbsolutePath();
-        return image;
-    }
-
     private void inputEditData(){
         DBManager dbManager = new DBManager(this);
         DBData data = dbManager.getData(dbIdx);
@@ -219,9 +136,12 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         imageName = ImageCompute.imageListStringToArray(data.getImageList());
     }
 
-    private void setToolbar(){
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(!imageName.isEmpty() || !imageInCacheName.isEmpty()) {
+            setImageList();
+        }
     }
 
     private void initImageList(){
@@ -256,23 +176,6 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         imageListAdapter.notifyDataSetChanged();
     }
 
-    private void deleteImage(String path){
-        if(imageName.isEmpty()) return;
-
-        if (path == null) {
-            for(int i = 0; i < imageName.size(); ++i) {
-                File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
-                if(!file.exists()) file = new File(getExternalCacheDir(), imageName.get(i));
-                file.delete();
-            }
-        }
-        else{
-            File file = new File(path);
-            imageName.remove(file.getName());
-            file.delete();
-        }
-    }
-
     @Override
     public void onClickedItem(final String path) {
         AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
@@ -290,6 +193,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         oDialog.show();
     }
 
+    // 액션바에 있는 메뉴 설정
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.add_appbar_action, menu);
@@ -356,6 +260,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
     }
 
+    //메모 상세보기 <-> 메모 수정
     private void changeToReadOnlyMode(){
         hideKeyboard();
         edit_menu.setVisible(true);
@@ -386,33 +291,17 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         imageListAdapter.notifyDataSetChanged();
     }
 
+    // 메모 추가 & 이미지 제거 관련
     private int checkCanSave(){
         if(title_edit.getText().toString().equals("")) return 1;
         else if(content_edit.getText().toString().equals("")) return 2;
         else return 0;
     }
 
-    TextWatcher watcher = new TextWatcher() {
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            isModified = true;
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-
-        }
-    };
-
-    private boolean saveMemo(){
+    private void saveMemo(){
         int canSave = checkCanSave();
         if(canSave != 0){
-            return false;
+            return;
         }
         ImageCompute.saveImageFromCache(this);
         isModified = false;
@@ -429,9 +318,27 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
             dbManager.updateData(data, dbIdx);
         }
         showToast("메모를 저장하였습니다.", Toast.LENGTH_SHORT);
-        return true;
+        return;
     }
 
+    private void deleteImage(String path){
+        if(imageName.isEmpty()) return;
+
+        if (path == null) {
+            for(int i = 0; i < imageName.size(); ++i) {
+                File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), imageName.get(i));
+                if(!file.exists()) file = new File(getExternalCacheDir(), imageName.get(i));
+                file.delete();
+            }
+        }
+        else{
+            File file = new File(path);
+            imageName.remove(file.getName());
+            file.delete();
+        }
+    }
+
+    // 현재 액티비티 종료 관련
     @Override
     public void onBackPressed() {
         hideKeyboard();
@@ -540,6 +447,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         finish();
     }
 
+    // 시스템 관련
     private void hideKeyboard(){
         if(getCurrentFocus() != null) {
             InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
@@ -553,25 +461,29 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         t.show();
     }
 
+    // 이미지 추가버튼 관련
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == 100 && resultCode == RESULT_OK){
-            Uri uri = data.getData();
-            try {
-                imageInCacheName.add(ImageCompute.openImage(this, uri));
-                isModified = true;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
-            if(imageNameBuffer != null && !imageNameBuffer.equals("")) {
-                imageInCacheName.add(imageNameBuffer);
-                ImageCompute.saveImageIcon(this, new File(getExternalCacheDir().getAbsolutePath() + "/" + imageNameBuffer));
-                isModified = true;
-            }
-        }
+    public void onClick(View view) {
+        hideKeyboard();
+        final CharSequence[] items =  {"사진 촬영", "갤러리에서 선택", "URL에서 선택"};
+        AlertDialog.Builder oDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+                .setTitle("이미지 불러오기")
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int pos) {
+                        switch (pos){
+                            case 0:
+                                callCameraActivity();
+                                break;
+                            case 1:
+                                addFromGallery();
+                                break;
+                            case 2:
+                                downloadAndSetImageFromURL();
+                                break;
+                        }
+                    }
+                });
+        oDialog.show();
     }
 
     private void callCameraActivity(){
@@ -600,17 +512,58 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
     }
 
+    private void addFromGallery() {
+        Intent i = new Intent();
+        i.setType("image/*");
+        i.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(i, "이미지 추가"), ADD_IMAGE_FROM_GALLERY);
+    }
+
+    private void downloadAndSetImageFromURL() {
+        final EditText editText = new EditText(AddMemoActivity.this);
+        final ConstraintLayout container = new ConstraintLayout(AddMemoActivity.this);
+        final ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
+        params.rightMargin =getResources().getDimensionPixelSize(R.dimen.edittext_in_dialog_margin);
+        editText.setLayoutParams(params);
+        container.addView(editText);
+
+        AlertDialog.Builder urlDialog = new AlertDialog.Builder(AddMemoActivity.this);
+        urlDialog.setView(container)
+                .setTitle("URL 입력")
+                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        new Thread(){
+                            @Override
+                            public void run() {
+                                String result = ImageCompute.openImage(getApplicationContext(), editText.getText().toString());
+                                Bundle bun = new Bundle();
+                                if(result != null){
+                                    bun.putString("RESULT", "OK");
+                                    imageInCacheName.add(result);
+                                }
+                                else{
+                                    bun.putString("RESULT", "FAIL");
+                                }
+                                Message msg = handler.obtainMessage();
+                                msg.setData(bun);
+                                handler.sendMessage(msg);
+                            }
+                        }.start();
+                    }
+                })
+                .setNegativeButton("취소", null);
+        urlDialog.show();
+    }
+
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             // Create the File where the photo should go
             File photoFile = null;
-            try {
-                photoFile = createImageFile();
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-            }
+            photoFile = ImageCompute.createImageFile(this);
             // Continue only if the File was successfully created
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(this,
@@ -623,6 +576,46 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
     }
 
+    // 이미지를 불러오는 인텐트를 실행했을 시 결과
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == ADD_IMAGE_FROM_GALLERY && resultCode == RESULT_OK){
+            Uri uri = data.getData();
+            try {
+                imageInCacheName.add(ImageCompute.openImage(this, uri));
+                isModified = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            if(imageNameBuffer != null && !imageNameBuffer.equals("")) {
+                imageInCacheName.add(imageNameBuffer);
+                ImageCompute.saveImageIcon(this, new File(getExternalCacheDir().getAbsolutePath() + "/" + imageNameBuffer));
+                isModified = true;
+            }
+        }
+    }
+
+    TextWatcher watcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            isModified = true;
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+
+        }
+    };
+
+    // 카메라 접근권한 관련
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode){
