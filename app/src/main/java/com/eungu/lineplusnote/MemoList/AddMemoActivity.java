@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -43,6 +44,7 @@ import com.eungu.lineplusnote.R;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -52,6 +54,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     private static final int ADD_IMAGE_FROM_GALLERY = 100;
     String imageNameBuffer;
 
+    TextView dateTextView = null;
     EditText title_edit = null;
     EditText content_edit = null;
     Button add_image_button = null;
@@ -106,6 +109,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         Intent intent = getIntent();
         dbIdx = intent.getExtras().getInt("idx", -1);
 
+        dateTextView = findViewById(R.id.memo_recent_modified);
+
         title_edit = findViewById(R.id.edit_title);
         title_edit.addTextChangedListener(watcher);
         content_edit = findViewById(R.id.edit_content);
@@ -122,6 +127,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
         else {
             isReadOnly = false;
+            dateTextView.setVisibility(View.GONE);
         }
 
         isModified = false;
@@ -134,6 +140,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         title_edit.setText(data.getTitle());
         content_edit.setText(data.getContent());
         imageName = ImageCompute.imageListStringToArray(data.getImageList());
+
+        dateTextView.setText(new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getTime().getTime()));
     }
 
     @Override
@@ -317,6 +325,9 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         else{
             dbManager.updateData(data, dbIdx);
         }
+
+        dateTextView.setVisibility(View.VISIBLE);
+        dateTextView.setText(new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getTime().getTime()));
         showToast("메모를 저장하였습니다.", Toast.LENGTH_SHORT);
         return;
     }

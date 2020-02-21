@@ -16,6 +16,13 @@
         android:inputType="textPersonName"
         android:singleLine="true" />
 
+    <TextView
+        android:id="@+id/memo_recent_modified"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:text="최근 수정 : " />
+
     <EditText
         android:id="@+id/edit_content"
         android:layout_width="match_parent"
