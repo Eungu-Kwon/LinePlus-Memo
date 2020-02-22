@@ -93,9 +93,11 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                 if(result == "OK"){
                     isModified = true;
                     setImageList();
+                    showToast("다운로드 완료!", Toast.LENGTH_LONG);
                 }
                 else if(result == "FAIL"){
                     createDialog("오류", "주소로부터 이미지를 읽을 수 없습니다.", "확인", null, null, null).show();
+                    showToast("다운로드 실패", Toast.LENGTH_SHORT);
                 }
             }
         };
