@@ -37,12 +37,16 @@ public class ImageFileManager {
         return result;
     }
 
-    public static void saveImageFromCache(Context c) {
-        //TODO make run in new Thread
-        File[] files = c.getExternalCacheDir().listFiles();
-        for(File f : files){
-            copyFile(f, c.getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + f.getName());
-        }
+    public static void saveImageFromCache(final Context c) {
+        new Thread(){
+            @Override
+            public void run() {
+                File[] files = c.getExternalCacheDir().listFiles();
+                for(File f : files){
+                    copyFile(f, c.getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + f.getName());
+                }
+            }
+        }.start();
     }
 
     public static void deleteCache(Context c){
