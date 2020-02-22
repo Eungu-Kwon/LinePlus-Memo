@@ -90,11 +90,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                     setImageList();
                 }
                 else if(result == "FAIL"){
-                    AlertDialog.Builder errorDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)
-                            .setTitle("오류")
-                            .setMessage("주소로부터 이미지를 읽을 수 없습니다.")
-                            .setPositiveButton("확인", null);
-                    errorDialog.show();
+                    createDialog("오류", "주소로부터 이미지를 읽을 수 없습니다.", "확인", null, null, null).show();
                 }
             }
         };
@@ -186,19 +182,15 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
 
     @Override
     public void onClickedItem(final String path) {
-        AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
-                .setTitle("이미지 삭제")
-                .setPositiveButton("예", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        deleteImage(path);
-                        imageListAdapter.notifyDataSetChanged();
-                        isModified = true;
-                    }
-                })
-                .setNeutralButton("아니요", null)
-                .setCancelable(false);
-        oDialog.show();
+        DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                deleteImage(path);
+                imageListAdapter.notifyDataSetChanged();
+                isModified = true;
+            }
+        };
+        createDialog("이미지 삭제", "이미지를 삭제하시겠습니까?", "예", positive, "아니요", null).show();
     }
 
     // 액션바에 있는 메뉴 설정
@@ -222,11 +214,14 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         hideKeyboard();
         switch (item.getItemId()) {
             case android.R.id.home:
+
                 onBackPressed();
                 return true;
+
             case R.id.m_edit_memo :
                 changeToWritableMode();
                 return true;
+
             case R.id.m_save_memo :
                 if(isModified) {
                     if(checkCanSave() == 0){
@@ -242,26 +237,22 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                     changeToReadOnlyMode();
                 }
                 return true ;
+
             case R.id.m_delete_memo :
-                AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
-                oDialog.setTitle("메모 삭제")
-                        .setMessage("메모를 삭제하시겠습니까?")
-                        .setPositiveButton("예", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if(dbIdx != -1) {
-                                    DBManager dbManager = new DBManager(getApplicationContext());
-                                    dbManager.deleteColumn(dbIdx);
-                                    setResult(RESULT_OK);
-                                }
-                                deleteImage(null);
-                                showToast("메모를 삭제하였습니다.", Toast.LENGTH_SHORT);
-                                finish();
-                            }
-                        })
-                        .setNeutralButton("아니요", null)
-                        .setCancelable(false)
-                        .show();
+                DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(dbIdx != -1) {
+                            DBManager dbManager = new DBManager(getApplicationContext());
+                            dbManager.deleteColumn(dbIdx);
+                            setResult(RESULT_OK);
+                        }
+                        deleteImage(null);
+                        showToast("메모를 삭제하였습니다.", Toast.LENGTH_SHORT);
+                        finish();
+                    }
+                };
+                createDialog("메모 삭제", "메모를 삭제하시겠습니까?", "예", positive, "아니요", null).show();
                 return true;
             default :
                 return super.onOptionsItemSelected(item);
@@ -358,7 +349,6 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     @Override
     public void onBackPressed() {
         hideKeyboard();
-        AlertDialog.Builder oDialog;
         String message = "";
         int canSave = checkCanSave();
         if(canSave == 1) message = "제목";
@@ -366,24 +356,15 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(dbIdx == -1) {
             if (isModified) {
                 if(canSave != 0){
-                    oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
-                    oDialog.setTitle("나가기")
-                            .setMessage(message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?")
-                            .setPositiveButton("예", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    setResult(RESULT_CANCELED);
-                                    finish();
-                                }
-                            })
-                            .setNeutralButton("아니요",  new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    return;
-                                }
-                            })
-                            .setCancelable(false)
-                            .show();
+                    DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            setResult(RESULT_CANCELED);
+                            finish();
+                        }
+                    };
+                    createDialog("나가기", message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?", "예", positive, "아니요", null).show();
+
                 }
                 else {
                     saveMemo();
@@ -402,28 +383,18 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
             else{
                 if(isModified){
                     if(checkCanSave() != 0){
-                        oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
-                        oDialog.setTitle("나가기")
-                                .setMessage(message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?")
-                                .setPositiveButton("예", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        setResult(RESULT_CANCELED);
-                                        finish();
-                                    }
-                                })
-                                .setNeutralButton("아니요",  new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        return;
-                                    }
-                                })
-                                .setCancelable(false)
-                                .show();
+                        DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                setResult(RESULT_CANCELED);
+                                finish();
+                            }
+                        };
+                        createDialog("나가기", message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?", "예", positive, "아니요", null).show();
                     }
                     else {
                         final CharSequence[] items =  {"저장하고 나가기", "저장하지 않고 나가기", "취소"};
-                        oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+                        AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
                                 .setTitle("메모를 저장하시겠습니까?")
                                 .setItems(items, new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int pos) {
@@ -477,6 +448,16 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         t.show();
     }
 
+    private AlertDialog createDialog(String title, String msg, String posMsg, DialogInterface.OnClickListener positive, String nagMsg, DialogInterface.OnClickListener negative){
+        AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
+        oDialog.setTitle(title)
+                .setMessage(msg)
+                .setPositiveButton(posMsg, positive)
+                .setCancelable(false);
+        if(nagMsg != null) oDialog.setNegativeButton(nagMsg, negative);
+        return oDialog.create();
+    }
+
     // 이미지 추가버튼 관련
     @Override
     public void onClick(View view) {
@@ -486,20 +467,24 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                 .setTitle("이미지 불러오기")
                 .setItems(items, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int pos) {
-                        switch (pos){
-                            case 0:
-                                callCameraActivity();
-                                break;
-                            case 1:
-                                addFromGallery();
-                                break;
-                            case 2:
-                                downloadAndSetImageFromURL();
-                                break;
-                        }
+                        addImage(pos);
                     }
                 });
         oDialog.show();
+    }
+
+    private void addImage(int pos){
+        switch (pos) {
+            case 0:
+                callCameraActivity();
+                break;
+            case 1:
+                addFromGallery();
+                break;
+            case 2:
+                downloadAndSetImageFromURL();
+                break;
+        }
     }
 
     private void callCameraActivity(){
@@ -507,18 +492,13 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                 Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(AddMemoActivity.this, Manifest.permission.CAMERA)) {
-                AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
-                oDialog.setTitle("권한 요청")
-                        .setMessage("카메라를 이용하기 위해 권한이 필요합니다.")
-                        .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                ActivityCompat.requestPermissions(AddMemoActivity.this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
-                            }
-                        })
-                        .setCancelable(false)
-                        .show();
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
+                DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        ActivityCompat.requestPermissions(AddMemoActivity.this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
+                    }
+                };
+                createDialog("권한 요청", "카메라를 이용하기 위해 권한이 필요합니다.", "확인", positive, null, null).show();
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
             }
