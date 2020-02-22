@@ -14,13 +14,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
-import com.eungu.lineplusnote.StaticMethod.ImageCompute;
 import com.eungu.lineplusnote.MemoList.MainListMaker.MemoListAdapter;
 import com.eungu.lineplusnote.MemoList.MainListMaker.MemoListItem;
 import com.eungu.lineplusnote.R;
+import com.eungu.lineplusnote.StaticMethod.ImageCompute;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,13 +71,30 @@ public class MainActivity extends AppCompatActivity {
 
             item.setTitle(dbData.getTitle());
             item.setContent(dbData.getContent());
-            item.setDate(new SimpleDateFormat("MM/dd").format(dbData.getTime().getTime()));
+
+            if(isMemoDateIsToday(dbData.getTime())){
+                item.setDate(new SimpleDateFormat("HH:mm").format(dbData.getTime().getTime()));
+            }
+            else{
+                item.setDate(new SimpleDateFormat("MM/dd").format(dbData.getTime().getTime()));
+            }
+
             if(imageList.size() > 0) item.setthumbnailPath(getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + imageList.get(0) + "_icon");
 
             list.add(item);
         }
 
         listAdapter.notifyDataSetChanged();
+    }
+
+    private boolean isMemoDateIsToday(Calendar memoDate){
+        Calendar today = Calendar.getInstance();
+        if(today.get(Calendar.YEAR) == memoDate.get(Calendar.YEAR) && today.get(Calendar.DAY_OF_YEAR) == memoDate.get(Calendar.DAY_OF_YEAR)){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     @Override
