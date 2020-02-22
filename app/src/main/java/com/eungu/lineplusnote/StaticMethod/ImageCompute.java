@@ -73,22 +73,13 @@ public class ImageCompute {
         Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
         int orientation = getOrientationOfImage(f.getAbsolutePath());
 
-        if(orientation > 0) {
-            Matrix matrix = new Matrix();
-            matrix.postRotate(orientation);
-
-            Bitmap resizedBitmap;
-            resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
-            bmp.recycle();
-            return resizedBitmap;
-        }
-
-        else return bmp;
+        Bitmap rotatedBmp = getBmpWithRotate(bmp, orientation);
+        return rotatedBmp;
     }
 
     public static Bitmap getBmpFromPathWithResize(String path, int size){
         if(path == null) return null;
-        
+
         File f = new File(path);
         if(!f.exists()) return null;
 
@@ -103,15 +94,13 @@ public class ImageCompute {
 
         Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath(), options);
 
-        if(orientation > 0) {
-            Matrix matrix = new Matrix();
-            matrix.postRotate(orientation);
+        bmp = getBmpWithRotate(bmp, orientation);
+        bmp = getCroppedImage(bmp);
 
-            Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
-            bmp.recycle();
-            bmp = resizedBitmap;
-        }
+        return bmp;
+    }
 
+    private static Bitmap getCroppedImage(Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         int offsetX = 0;
@@ -129,6 +118,18 @@ public class ImageCompute {
         Bitmap croppedBmp = Bitmap.createBitmap(bmp, offsetX, offsetY, width, height);
         bmp.recycle();
         return croppedBmp;
+    }
+
+    public static Bitmap getBmpWithRotate(Bitmap bmp, int orientation){
+        if(orientation > 0) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(orientation);
+
+            Bitmap resizedBitmap = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
+            bmp.recycle();
+            return resizedBitmap;
+        }
+        return bmp;
     }
 
     public static ArrayList<String> imageListStringToArray(String str){
