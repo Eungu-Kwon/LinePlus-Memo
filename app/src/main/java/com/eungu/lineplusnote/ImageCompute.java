@@ -1,52 +1,19 @@
 package com.eungu.lineplusnote;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
-import android.net.Uri;
-import android.os.Environment;
-import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 
 public class ImageCompute {
 
     public static final int NO_RESIZE = -1;
-
-    public static boolean copyFile(File file , String save_file){
-        boolean result;
-        if(file != null && file.exists()){
-            try {
-                FileInputStream fis = new FileInputStream(file);
-                FileOutputStream newfos = new FileOutputStream(save_file);
-
-                int readcount=0;
-                byte[] buffer = new byte[1024];
-                while((readcount = fis.read(buffer,0,1024))!= -1){
-                    newfos.write(buffer,0,readcount);
-                }
-                newfos.close();
-                fis.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            result = true;
-        }else{
-            result = false;
-        }
-        return result;
-    }
 
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
@@ -182,21 +149,6 @@ public class ImageCompute {
         return str;
     }
 
-    public static void saveImageFromCache(Context c) {
-        //TODO make run in new Thread
-        File[] files = c.getExternalCacheDir().listFiles();
-        for(File f : files){
-            ImageCompute.copyFile(f, c.getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + f.getName());
-        }
-    }
-
-    public static void deleteCache(Context c){
-        File[] files = c.getExternalCacheDir().listFiles();
-        for(File f : files){
-            if(f.exists()) f.delete();
-        }
-    }
-
     public static byte[] inputStreamToByteArray(InputStream is) {
 
         byte[] resBytes = null;
@@ -219,74 +171,4 @@ public class ImageCompute {
         return resBytes;
     }
 
-    //open Image from internet
-    public static File openImage(Context c, final String src) {
-        File file = createImageFile(c);
-
-        try {
-            java.net.URL url = new java.net.URL(src);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setDoInput(true);
-            connection.connect();
-
-            String contentType = connection.getHeaderField("Content-Type");
-            if(!contentType.startsWith("image/")) {
-                return null;
-            }
-            InputStream input = connection.getInputStream();
-            byte[] strToByte = inputStreamToByteArray(input);
-
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(strToByte);
-            fos.close();
-            input.close();
-
-        } catch (IOException e) {
-            return null;
-        }
-
-        return file;
-    }
-
-    public static File openImage(Context c, Uri uri) throws IOException {
-        InputStream inputStream = c.getContentResolver().openInputStream(uri);
-        byte[] strToByte = inputStreamToByteArray(inputStream);
-
-        File file = createImageFile(c);
-
-        FileOutputStream fos = new FileOutputStream(file);
-        fos.write(strToByte);
-        fos.close();
-        inputStream.close();
-
-        return file;
-    }
-
-    public static void saveImageIcon(Context c, File f){
-        String iconFile;
-        iconFile = c.getExternalCacheDir().getAbsolutePath() + "/" + f.getName() + "_icon";
-        File tempFile = new File(iconFile);
-        try {
-            FileOutputStream out = new FileOutputStream(tempFile);
-            Bitmap bmp = getBmpFromPathWithResize(f.getAbsolutePath(), 200);
-            bmp.compress(Bitmap.CompressFormat.JPEG, 20, out);
-            out.close();
-            bmp.recycle();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static File createImageFile(Context c) {
-        // Create an image file name
-        String timeStamp = getTimeStamp();
-        String imageFileName = timeStamp;
-        File storageDir = c.getExternalCacheDir();
-        File image = new File(storageDir + "/" + imageFileName + ".jpg");
-        return image;
-    }
-
-    private static String getTimeStamp(){
-        return new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
-    }
 }

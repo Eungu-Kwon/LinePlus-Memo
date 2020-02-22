@@ -38,6 +38,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
 import com.eungu.lineplusnote.ImageCompute;
+import com.eungu.lineplusnote.ImageFileManager;
+import com.eungu.lineplusnote.ImageOpener;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListListener;
 import com.eungu.lineplusnote.R;
@@ -79,7 +81,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_or_modify_memo);
 
-        ImageCompute.deleteCache(this);
+        ImageFileManager.deleteCache(this);
 
         handler = new Handler() {
             public void handleMessage(Message msg) {
@@ -302,7 +304,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(canSave != 0){
             return;
         }
-        ImageCompute.saveImageFromCache(this);
+        ImageFileManager.saveImageFromCache(this);
         isModified = false;
         isSaved = true;
         imageName.addAll(imageInCacheName);
@@ -531,13 +533,13 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                         new Thread(){
                             @Override
                             public void run() {
-                                File image = ImageCompute.openImage(getApplicationContext(), editText.getText().toString());
+                                File image = ImageOpener.openImage(getApplicationContext(), editText.getText().toString());
 
                                 Bundle bun = new Bundle();
                                 if(image != null){
                                     bun.putString("RESULT", "OK");
                                     imageInCacheName.add(image.getName());
-                                    ImageCompute.saveImageIcon(getApplicationContext(), image);
+                                    ImageFileManager.saveImageIcon(getApplicationContext(), image);
                                 }
                                 else{
                                     bun.putString("RESULT", "FAIL");
@@ -560,7 +562,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             // Create the File where the photo should go
             File photoFile = null;
-            photoFile = ImageCompute.createImageFile(this);
+            photoFile = ImageFileManager.createImageFile(this);
             // Continue only if the File was successfully created
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(this,
@@ -580,8 +582,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(requestCode == ADD_IMAGE_FROM_GALLERY && resultCode == RESULT_OK){
             Uri uri = data.getData();
             try {
-                File image = ImageCompute.openImage(this, uri);
-                ImageCompute.saveImageIcon(getApplicationContext(), image);
+                File image = ImageOpener.openImage(this, uri);
+                ImageFileManager.saveImageIcon(getApplicationContext(), image);
                 imageInCacheName.add(image.getName());
                 isModified = true;
             } catch (IOException e) {
@@ -591,7 +593,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
             if(imageNameBuffer != null && !imageNameBuffer.equals("")) {
                 imageInCacheName.add(imageNameBuffer);
-                ImageCompute.saveImageIcon(this, new File(getExternalCacheDir().getAbsolutePath() + "/" + imageNameBuffer));
+                ImageFileManager.saveImageIcon(this, new File(getExternalCacheDir().getAbsolutePath() + "/" + imageNameBuffer));
                 isModified = true;
             }
         }
