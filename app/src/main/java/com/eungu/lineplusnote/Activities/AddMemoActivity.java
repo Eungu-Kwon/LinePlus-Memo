@@ -249,7 +249,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                     public void onClick(DialogInterface dialog, int which) {
                         if(dbIdx != -1) {
                             DBManager dbManager = new DBManager(getApplicationContext());
-                            dbManager.deleteColumn(dbIdx);
+                            dbManager.deleteRow(dbIdx);
                             setResult(RESULT_OK);
                         }
                         deleteImage(null);

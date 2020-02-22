@@ -37,6 +37,7 @@ public class DBManager {
 
         DBData dbData = new DBData(Calendar.getInstance(), cursor.getString(cursor.getColumnIndex(DBData.MEMO_TITLE)), cursor.getString(cursor.getColumnIndex(DBData.MEMO_CONTENT)), cursor.getString(cursor.getColumnIndex(DBData.MEMO_IMAGES)));
         dbData.setTimeFromText(cursor.getString(cursor.getColumnIndex(DBData.MEMO_DATE)));
+        db.close();
 
         return dbData;
     }
@@ -71,7 +72,7 @@ public class DBManager {
         db.close();
     }
 
-    public boolean deleteColumn(long id){
+    public boolean deleteRow(long id){
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         int ret = db.delete(DBData.MEMO_TABLE, "_id="+(id+1), null);
         computeID(db);
@@ -85,6 +86,7 @@ public class DBManager {
         Cursor cursor = db.rawQuery(countQuery, null);
         int ret = cursor.getCount();
         cursor.close();
+        db.close();
 
         return ret;
     }
