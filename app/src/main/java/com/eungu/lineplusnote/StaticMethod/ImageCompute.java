@@ -15,16 +15,13 @@ public class ImageCompute {
 
     public static final int NO_RESIZE = -1;
 
-    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
+    public static int calculateInSampleSize(int imageWidth, int imageHeight, int reqWidth, int reqHeight) {
         int inSampleSize = 1;
 
-        if (height > reqHeight || width > reqWidth) {
+        if (imageHeight > reqHeight || imageWidth > reqWidth) {
 
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
+            final int halfHeight = imageHeight / 2;
+            final int halfWidth = imageWidth / 2;
 
             // Calculate the largest inSampleSize value that is a power of 2 and keeps both
             // height and width larger than the requested height and width.
@@ -89,7 +86,7 @@ public class ImageCompute {
 
         int orientation = getOrientationOfImage(path);
 
-        if(size != NO_RESIZE) options.inSampleSize = ImageCompute.calculateInSampleSize(options, size, size);
+        if(size != NO_RESIZE) options.inSampleSize = ImageCompute.calculateInSampleSize(options.outWidth, options.outHeight, size, size);
         options.inJustDecodeBounds = false;
 
         Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath(), options);
