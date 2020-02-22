@@ -353,75 +353,73 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         int canSave = checkCanSave();
         if(canSave == 1) message = "제목";
         else if (canSave == 2) message = "내용";
-        if(dbIdx == -1) {
-            if (isModified) {
-                if(canSave != 0){
-                    DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            setResult(RESULT_CANCELED);
-                            finish();
-                        }
-                    };
-                    createDialog("나가기", message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?", "예", positive, "아니요", null).show();
 
-                }
-                else {
-                    saveMemo();
-                    setResult(RESULT_OK);
-                    finish();
-                }
+        if(isReadOnly){
+            exitActivity();
+            return;
+        }
+
+        // 메모 내용이 수정되었을때 저장가능한지 체크하고 저장 / 폐기한다
+        if (isModified) {
+
+            // 저장할 수 없을때
+            if(canSave != 0){
+                DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        setResult(RESULT_CANCELED);
+                        finish();
+                    }
+                };
+                createDialog("나가기", message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?", "예", positive, "아니요", null).show();
             }
+
+            // 저장 가능할 때
             else {
-                exitActivity();
+                onModiFiedAndCanSave();
             }
         }
+
+        // 수정되지 않았을 시 현재 액티비티를 종료
         else {
-            if(isReadOnly){
-                exitActivity();
-            }
-            else{
-                if(isModified){
-                    if(checkCanSave() != 0){
-                        DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                setResult(RESULT_CANCELED);
-                                finish();
+            exitActivity();
+        }
+    }
+
+    // 메모가 수정되었고 저장가능할 때 호출
+    private void onModiFiedAndCanSave(){
+        // 메모를 처음 만들었으면 저장하고 나간다
+        if(dbIdx == -1) {
+            saveMemo();
+            setResult(RESULT_OK);
+            finish();
+        }
+
+        // 메모를 수정중이면 물어보고 결정
+        else {
+            final CharSequence[] items =  {"저장하고 나가기", "저장하지 않고 나가기", "취소"};
+            AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+                    .setTitle("메모를 저장하시겠습니까?")
+                    .setItems(items, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int pos) {
+                            switch (pos){
+                                case 0:
+                                    saveMemo();
+                                    setResult(RESULT_OK);
+                                    finish();
+                                    break;
+                                case 1:
+                                    if(isSaved)
+                                        setResult(RESULT_OK);
+                                    else
+                                        setResult(RESULT_CANCELED);
+                                    finish();
+                                    break;
                             }
-                        };
-                        createDialog("나가기", message + "이 비어있어 저장할 수 없습니다.\n저장하지 않고 나가시겠습니까?", "예", positive, "아니요", null).show();
-                    }
-                    else {
-                        final CharSequence[] items =  {"저장하고 나가기", "저장하지 않고 나가기", "취소"};
-                        AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
-                                .setTitle("메모를 저장하시겠습니까?")
-                                .setItems(items, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int pos) {
-                                        switch (pos){
-                                            case 0:
-                                                saveMemo();
-                                                setResult(RESULT_OK);
-                                                finish();
-                                                break;
-                                            case 1:
-                                                if(isSaved)
-                                                    setResult(RESULT_OK);
-                                                else
-                                                    setResult(RESULT_CANCELED);
-                                                finish();
-                                                break;
-                                        }
-                                    }
-                                })
-                                .setCancelable(false);
-                        oDialog.show();
-                    }
-                }
-                else {
-                    changeToReadOnlyMode();
-                }
-            }
+                        }
+                    })
+                    .setCancelable(false);
+            oDialog.show();
         }
     }
 
