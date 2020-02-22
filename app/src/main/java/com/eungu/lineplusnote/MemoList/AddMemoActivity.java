@@ -531,15 +531,18 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                         new Thread(){
                             @Override
                             public void run() {
-                                String result = ImageCompute.openImage(getApplicationContext(), editText.getText().toString());
+                                File image = ImageCompute.openImage(getApplicationContext(), editText.getText().toString());
+
                                 Bundle bun = new Bundle();
-                                if(result != null){
+                                if(image != null){
                                     bun.putString("RESULT", "OK");
-                                    imageInCacheName.add(result);
+                                    imageInCacheName.add(image.getName());
+                                    ImageCompute.saveImageIcon(getApplicationContext(), image);
                                 }
                                 else{
                                     bun.putString("RESULT", "FAIL");
                                 }
+
                                 Message msg = handler.obtainMessage();
                                 msg.setData(bun);
                                 handler.sendMessage(msg);
@@ -577,7 +580,9 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(requestCode == ADD_IMAGE_FROM_GALLERY && resultCode == RESULT_OK){
             Uri uri = data.getData();
             try {
-                imageInCacheName.add(ImageCompute.openImage(this, uri));
+                File image = ImageCompute.openImage(this, uri);
+                ImageCompute.saveImageIcon(getApplicationContext(), image);
+                imageInCacheName.add(image.getName());
                 isModified = true;
             } catch (IOException e) {
                 e.printStackTrace();

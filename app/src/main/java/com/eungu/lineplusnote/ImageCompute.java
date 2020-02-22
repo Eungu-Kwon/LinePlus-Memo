@@ -220,9 +220,8 @@ public class ImageCompute {
     }
 
     //open Image from internet
-    public static String openImage(Context c, final String src) {
-        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
-        File file = new File(c.getExternalCacheDir(), fileName);
+    public static File openImage(Context c, final String src) {
+        File file = createImageFile(c);
 
         try {
             java.net.URL url = new java.net.URL(src);
@@ -246,25 +245,21 @@ public class ImageCompute {
             return null;
         }
 
-        saveImageIcon(c, file);
-        return fileName;
+        return file;
     }
 
-    public static String openImage(Context c, Uri uri) throws IOException {
-        String fileName = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+    public static File openImage(Context c, Uri uri) throws IOException {
         InputStream inputStream = c.getContentResolver().openInputStream(uri);
         byte[] strToByte = inputStreamToByteArray(inputStream);
 
-        File file = new File(c.getExternalCacheDir(), fileName);
+        File file = createImageFile(c);
 
         FileOutputStream fos = new FileOutputStream(file);
         fos.write(strToByte);
         fos.close();
         inputStream.close();
 
-        saveImageIcon(c, file);
-
-        return fileName;
+        return file;
     }
 
     public static void saveImageIcon(Context c, File f){
@@ -284,10 +279,14 @@ public class ImageCompute {
 
     public static File createImageFile(Context c) {
         // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
-        String imageFileName = "CAM" + timeStamp;
+        String timeStamp = getTimeStamp();
+        String imageFileName = timeStamp;
         File storageDir = c.getExternalCacheDir();
         File image = new File(storageDir + "/" + imageFileName + ".jpg");
         return image;
+    }
+
+    private static String getTimeStamp(){
+        return new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
     }
 }
