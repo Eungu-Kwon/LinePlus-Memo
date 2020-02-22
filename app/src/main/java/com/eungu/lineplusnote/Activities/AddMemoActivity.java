@@ -1,4 +1,4 @@
-package com.eungu.lineplusnote.MemoList;
+package com.eungu.lineplusnote.Activities;
 
 import android.Manifest;
 import android.app.Activity;
@@ -38,9 +38,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
-import com.eungu.lineplusnote.ImageCompute;
-import com.eungu.lineplusnote.ImageFileManager;
-import com.eungu.lineplusnote.ImageOpener;
+import com.eungu.lineplusnote.StaticMethod.ImageCompute;
+import com.eungu.lineplusnote.StaticMethod.ImageFileManager;
+import com.eungu.lineplusnote.StaticMethod.ImageOpener;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListListener;
 import com.eungu.lineplusnote.R;

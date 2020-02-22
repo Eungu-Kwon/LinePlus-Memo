@@ -11,8 +11,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.eungu.lineplusnote.ImageCompute;
-import com.eungu.lineplusnote.MemoList.ImageViewActivity;
+import com.eungu.lineplusnote.Activities.ImageViewActivity;
 import com.eungu.lineplusnote.R;
 
 import java.io.File;

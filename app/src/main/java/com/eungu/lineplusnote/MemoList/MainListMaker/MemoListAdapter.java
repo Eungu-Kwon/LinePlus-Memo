@@ -14,9 +14,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
-import com.eungu.lineplusnote.ImageCompute;
-import com.eungu.lineplusnote.MemoList.AddMemoActivity;
-import com.eungu.lineplusnote.MemoList.MainActivity;
+import com.eungu.lineplusnote.StaticMethod.ImageCompute;
+import com.eungu.lineplusnote.Activities.AddMemoActivity;
+import com.eungu.lineplusnote.Activities.MainActivity;
 import com.eungu.lineplusnote.R;
 
 import java.util.ArrayList;

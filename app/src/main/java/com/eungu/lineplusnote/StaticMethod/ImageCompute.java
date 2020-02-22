@@ -1,4 +1,4 @@
-package com.eungu.lineplusnote;
+package com.eungu.lineplusnote.StaticMethod;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

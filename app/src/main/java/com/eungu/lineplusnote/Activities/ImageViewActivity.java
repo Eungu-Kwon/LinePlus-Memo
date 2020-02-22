@@ -1,17 +1,16 @@
-package com.eungu.lineplusnote.MemoList;
+package com.eungu.lineplusnote.Activities;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.MenuItem;
 import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.eungu.lineplusnote.ImageCompute;
+import com.eungu.lineplusnote.StaticMethod.ImageCompute;
 import com.eungu.lineplusnote.R;
 import com.github.chrisbanes.photoview.PhotoView;
 

@@ -13,16 +13,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MemoList.MainActivity">
+        <activity android:name=".Activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MemoList.AddMemoActivity"
+        <activity android:name=".Activities.AddMemoActivity"
             android:windowSoftInputMode="adjustResize"></activity>
-        <activity android:name=".MemoList.ImageViewActivity"></activity>
+        <activity android:name=".Activities.ImageViewActivity"></activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"
