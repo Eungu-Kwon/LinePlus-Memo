@@ -314,8 +314,15 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         isSaved = true;
         imageName.addAll(imageInCacheName);
         imageInCacheName.clear();
-        DBData data = new DBData(Calendar.getInstance(), title_edit.getText().toString(), content_edit.getText().toString(), ImageCompute.imageListArrayToString(imageName));
+
+        Calendar toSaveCalendar = Calendar.getInstance();
         DBManager dbManager = new DBManager(getApplicationContext());
+        if(dbIdx != -1){
+            DBData oldData = dbManager.getData(dbIdx);
+            toSaveCalendar = oldData.getTime();
+        }
+        DBData data = new DBData(toSaveCalendar, title_edit.getText().toString(), content_edit.getText().toString(), ImageCompute.imageListArrayToString(imageName));
+
         if(dbIdx == -1) {
             dbIdx = dbManager.getItemsCount();
             dbManager.addData(data);
