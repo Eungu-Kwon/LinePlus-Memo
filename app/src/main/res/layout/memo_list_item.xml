@@ -3,14 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="100dp"
-    android:layout_margin="5dp">
+    android:layout_margin="10dp"
+    android:background="@android:color/white">
+
+    <ImageView
+        android:id="@+id/l_item_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="3"
+        app:srcCompat="@drawable/ic_launcher_foreground" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginStart="5dp"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginStart="5dp">
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -22,11 +31,11 @@
                 android:id="@+id/l_item_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:singleLine="true"
                 android:text="Title"
                 android:textColor="#000000"
-                android:singleLine="true"
                 android:textSize="30sp" />
 
             <TextView
@@ -43,18 +52,11 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center_vertical"
+            android:singleLine="true"
             android:text="Content"
             android:textColor="#000000"
-            android:singleLine="true"
-            android:textSize="20sp"/>
+            android:textSize="20sp" />
 
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/l_item_image"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_vertical"
-        android:layout_weight="3"
-        app:srcCompat="@drawable/ic_launcher_foreground" />
 </LinearLayout>

@@ -38,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        getSupportActionBar().setElevation(0f);
+        getSupportActionBar().setTitle("라인 메모");
+
         init_list();
         setList();
 
@@ -51,9 +54,9 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(listAdapter);
 
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(getApplicationContext(), DividerItemDecoration.VERTICAL);
-        dividerItemDecoration.setDrawable(getResources().getDrawable(R.drawable.recyclerview_divider));
-        recyclerView.addItemDecoration(dividerItemDecoration);
+//        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(getApplicationContext(), DividerItemDecoration.VERTICAL);
+//        dividerItemDecoration.setDrawable(getResources().getDrawable(R.drawable.recyclerview_divider));
+//        recyclerView.addItemDecoration(dividerItemDecoration);
     }
 
     private void setList(){

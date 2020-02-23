@@ -82,6 +82,9 @@ public class ImageViewActivity extends AppCompatActivity  {
         bmp = ImageCompute.getBmpFromPathWithRotate(imageFile.getAbsolutePath());
 
         pv.setImageDrawable(new BitmapDrawable(this.getResources(), bmp));
+
+        getSupportActionBar().setTitle("");
+        getSupportActionBar().setElevation(0f);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 

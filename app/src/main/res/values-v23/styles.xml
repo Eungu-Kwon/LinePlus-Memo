@@ -1,5 +1,5 @@
 <resources>
-<!--v23 미만-->
+<!--v23 이상-->
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight">
         <!-- Customize your theme here. -->
@@ -8,6 +8,7 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowBackground">@color/colorBackground</item>
         <item name="android:textColorPrimary">@color/pantonClassicBlue</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
 </resources>

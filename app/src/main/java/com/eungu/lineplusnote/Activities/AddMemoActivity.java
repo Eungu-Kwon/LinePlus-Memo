@@ -38,13 +38,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
 import com.eungu.lineplusnote.MemoHandler.HandlerListener;
+import com.eungu.lineplusnote.MemoHandler.WorkHandler;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListListener;
 import com.eungu.lineplusnote.R;
 import com.eungu.lineplusnote.StaticMethod.ImageCompute;
 import com.eungu.lineplusnote.StaticMethod.ImageFileManager;
 import com.eungu.lineplusnote.StaticMethod.ImageOpener;
-import com.eungu.lineplusnote.MemoHandler.WorkHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,6 +91,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         handler.setListener(this);
 
         initView();
+
+        getSupportActionBar().setElevation(0f);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
@@ -129,10 +131,12 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(dbIdx != -1){
             inputEditData();
             isReadOnly = true;
+            getSupportActionBar().setTitle("메모 추가");
         }
         else {
             isReadOnly = false;
             dateTextView.setVisibility(View.GONE);
+            getSupportActionBar().setTitle("상세보기");
         }
 
         isModified = false;
@@ -279,6 +283,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         isReadOnly = true;
         imageListAdapter.setEditingMode(false);
         imageListAdapter.notifyDataSetChanged();
+        getSupportActionBar().setTitle("상세보기");
     }
 
     private void changeToWritableMode(){
@@ -297,6 +302,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         isReadOnly = false;
         imageListAdapter.setEditingMode(true);
         imageListAdapter.notifyDataSetChanged();
+        getSupportActionBar().setTitle("메모 수정");
     }
 
     // 메모 추가 & 이미지 제거 관련
