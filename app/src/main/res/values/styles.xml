@@ -4,7 +4,7 @@
     <style name="AppTheme" parent="Theme.AppCompat.DayNight">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorBackground</item>
-        <item name="colorPrimaryDark">@color/colorBackground</item>
+        <item name="colorPrimaryDark">@color/statusbarunder23</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowBackground">@color/colorBackground</item>
         <item name="android:textColorPrimary">@color/pantonClassicBlue</item>

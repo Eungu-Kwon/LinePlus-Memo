@@ -5,4 +5,6 @@
     <color name="colorAccent">#D81B60</color>
     <color name="colorBackground">#ebf6f9</color>
     <color name="pantonClassicBlue">#0f4c81</color>
+    <color name="statusbarunder23">#696c71</color>
+
 </resources>
