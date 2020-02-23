@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.text.Editable;
@@ -38,12 +37,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.eungu.lineplusnote.DBManager.DBData;
 import com.eungu.lineplusnote.DBManager.DBManager;
-import com.eungu.lineplusnote.StaticMethod.ImageCompute;
-import com.eungu.lineplusnote.StaticMethod.ImageFileManager;
-import com.eungu.lineplusnote.StaticMethod.ImageOpener;
+import com.eungu.lineplusnote.MemoHandler.HandlerListener;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListAdapter;
 import com.eungu.lineplusnote.MemoList.ImageListMaker.ImageListListener;
 import com.eungu.lineplusnote.R;
+import com.eungu.lineplusnote.StaticMethod.ImageCompute;
+import com.eungu.lineplusnote.StaticMethod.ImageFileManager;
+import com.eungu.lineplusnote.StaticMethod.ImageOpener;
+import com.eungu.lineplusnote.MemoHandler.WorkHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +52,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-public class AddMemoActivity extends AppCompatActivity implements ImageListListener, View.OnClickListener {
+public class AddMemoActivity extends AppCompatActivity implements ImageListListener, View.OnClickListener, HandlerListener {
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int MY_PERMISSIONS_REQUEST_CAMERA = 123;
     private static final int ADD_IMAGE_FROM_GALLERY = 100;
@@ -64,7 +65,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
 
     MenuItem edit_menu, save_menu;
 
-    Handler handler;
+    WorkHandler handler;
 
     private int dbIdx;
 
@@ -86,25 +87,26 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
 
         ImageFileManager.deleteCache(this);
 
-        handler = new Handler() {
-            public void handleMessage(Message msg) {
-                Bundle bun = msg.getData();
-                String result = bun.getString("RESULT");
-                if(result == "OK"){
-                    isModified = true;
-                    setImageList();
-                    showToast("다운로드 완료!", Toast.LENGTH_LONG);
-                }
-                else if(result == "FAIL"){
-                    createDialog("오류", "주소로부터 이미지를 읽을 수 없습니다.", "확인", null, null, null).show();
-                    showToast("다운로드 실패", Toast.LENGTH_SHORT);
-                }
-            }
-        };
+        handler = new WorkHandler(getApplicationContext());
+        handler.setListener(this);
 
         initView();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+    }
+
+    @Override
+    public void messageFromHandler(Bundle b) {
+        String result = b.getString("RESULT");
+        if(result == "OK"){
+            isModified = true;
+            setImageList();
+            showToast("다운로드 완료!", Toast.LENGTH_LONG);
+        }
+        else if(result == "FAIL"){
+            createDialog("오류", "주소로부터 이미지를 읽을 수 없습니다.", "확인", null, null, null).show();
+            showToast("다운로드 실패", Toast.LENGTH_SHORT);
+        }
     }
 
     // 뷰 초기 설정
@@ -337,7 +339,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         return;
     }
 
-    private void deleteImage(String path){
+    public void deleteImage(String path){
         if(imageName.isEmpty()) return;
 
         if (path == null) {
@@ -548,6 +550,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                                 File image = ImageOpener.openImage(getApplicationContext(), editText.getText().toString());
 
                                 Bundle bun = new Bundle();
+                                bun.putString("REQUEST", WorkHandler.HANDLE_IN_SAVE_FROM_URL);
                                 if(image != null){
                                     bun.putString("RESULT", "OK");
                                     imageInCacheName.add(image.getName());

@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,16 +31,16 @@ import androidx.core.content.ContextCompat;
 import com.eungu.lineplusnote.R;
 import com.eungu.lineplusnote.StaticMethod.ImageCompute;
 import com.eungu.lineplusnote.StaticMethod.ImageFileManager;
+import com.eungu.lineplusnote.MemoHandler.WorkHandler;
 import com.github.chrisbanes.photoview.PhotoView;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ImageViewActivity extends AppCompatActivity {
+public class ImageViewActivity extends AppCompatActivity  {
 
     private static final int MY_PERMISSIONS_REQUEST_STORAGE = 121;
     private String fileName;
@@ -86,19 +85,7 @@ public class ImageViewActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        handler = new Handler() {
-            public void handleMessage(Message msg) {
-                Bundle bun = msg.getData();
-                String result = bun.getString("RESULT");
-                String request = bun.getString("REQUEST");
-                if(result == "OK"){
-                    Toast.makeText(getApplicationContext(), "이미지를 저장했습니다.", Toast.LENGTH_LONG).show();
-                }
-                else if(result == "FAIL"){
-                    Toast.makeText(getApplicationContext(), "이미지를 저장하지 못했습니다.", Toast.LENGTH_LONG).show();
-                }
-            }
-        };
+        handler = new WorkHandler(getApplicationContext());
     }
 
     private void hideSystemUI() {
@@ -176,13 +163,13 @@ public class ImageViewActivity extends AppCompatActivity {
     @SuppressWarnings("deprecation")
     public void addImageToGallery() {
         final Bundle bun = new Bundle();
-        bun.putString("REQUEST", "100");
+        bun.putString("REQUEST", WorkHandler.HANDLE_IN_SAVE_TO_GALLERY);
 
         Uri collection;
         ContentValues values = new ContentValues();
         ContentResolver contentResolver = getContentResolver();
 
-        String fileName = imageFile.getName() + ".jpg";
+        String fileName = ImageFileManager.getTimeStamp() + ".jpg";
 
         values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
@@ -236,6 +223,7 @@ public class ImageViewActivity extends AppCompatActivity {
                     boolean result = ImageFileManager.copyFile(bmp, saveFile.getAbsolutePath());
 
                     if(result){
+                        galleryAddPic(saveFile.getAbsolutePath());
                         bun.putString("RESULT", "OK");
                     }
                     else{
@@ -252,6 +240,14 @@ public class ImageViewActivity extends AppCompatActivity {
             values.put(MediaStore.Images.Media.DATA, saveDir.getAbsolutePath() + "/" + fileName);
             contentResolver.insert(collection, values);
         }
+    }
+
+    private void galleryAddPic(String currentPhotoPath) {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        File f = new File(currentPhotoPath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
     }
 
     @Override

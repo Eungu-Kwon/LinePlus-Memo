@@ -2,7 +2,6 @@ package com.eungu.lineplusnote.StaticMethod;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.media.ExifInterface;
 import android.os.Environment;
 
 import java.io.File;
@@ -96,7 +95,7 @@ public class ImageFileManager {
         return image;
     }
 
-    private static String getTimeStamp(){
+    public static String getTimeStamp(){
         return new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
     }
 }
