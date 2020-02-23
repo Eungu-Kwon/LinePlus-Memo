@@ -1,23 +1,45 @@
 package com.eungu.lineplusnote.Activities;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
-import com.eungu.lineplusnote.StaticMethod.ImageCompute;
 import com.eungu.lineplusnote.R;
+import com.eungu.lineplusnote.StaticMethod.ImageCompute;
+import com.eungu.lineplusnote.StaticMethod.ImageFileManager;
 import com.github.chrisbanes.photoview.PhotoView;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class ImageViewActivity extends AppCompatActivity {
 
+    private static final int MY_PERMISSIONS_REQUEST_STORAGE = 121;
     private String fileName;
     private File imageFile;
     private boolean isFullmode;
@@ -89,13 +111,122 @@ public class ImageViewActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_image_view, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case android.R.id.home:
                 onBackPressed();
                 return true;
+            case R.id.m_download_image:
+                checkPermissionAndSave();
+                break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void checkPermissionAndSave(){
+        if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(ImageViewActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        ActivityCompat.requestPermissions(ImageViewActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_STORAGE);
+                    }
+                };
+                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext())
+                        .setTitle("권한 요청")
+                        .setMessage("카메라를 이용하기 위해 권한이 필요합니다.")
+                        .setPositiveButton("확인", positive);
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_STORAGE);
+            }
+        }
+        else{
+            try {
+                addImageToGallery();
+                Toast.makeText(getApplicationContext(), "이미지를 저장했습니다.", Toast.LENGTH_LONG).show();
+            } catch (IOException e) {
+                Toast.makeText(getApplicationContext(), "이미지를 저장하지 못했습니다.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    public void addImageToGallery() throws IOException {
+        Uri collection;
+        ContentValues values = new ContentValues();
+        ContentResolver contentResolver = getContentResolver();
+
+        String fileName = imageFile.getName() + ".jpg";
+
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.put(MediaStore.Images.Media.IS_PENDING, 1);
+            values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LineMemo");
+            collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+
+            Uri item = contentResolver.insert(collection, values);
+
+            ParcelFileDescriptor pdf = contentResolver.openFileDescriptor(item, "w", null);
+            if (pdf != null) {
+                InputStream inputStream = new FileInputStream(imageFile);
+                byte[] strToByte = ImageCompute.inputStreamToByteArray(inputStream);
+                FileOutputStream fos = new FileOutputStream(pdf.getFileDescriptor());
+                fos.write(strToByte);
+                fos.close();
+                inputStream.close();
+                pdf.close();
+                contentResolver.update(item, values, null, null);
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.clear();
+                values.put(MediaStore.Images.Media.IS_PENDING, 0);
+                contentResolver.update(item, values, null, null);
+            }
+        }
+
+        else{
+            File saveDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/LineMemo");
+            File saveFile = new File(saveDir, fileName);
+            if (!saveDir.exists()) saveDir.mkdir();
+
+            if(!ImageFileManager.copyFile(imageFile, saveFile.getAbsolutePath())){
+                return;
+            }
+
+            collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            values.put(MediaStore.Images.Media.DATA, saveDir.getAbsolutePath() + "/" + fileName);
+
+            contentResolver.insert(collection, values);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case MY_PERMISSIONS_REQUEST_STORAGE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        addImageToGallery();
+                        Toast.makeText(getApplicationContext(), "이미지를 저장했습니다.", Toast.LENGTH_LONG).show();
+                    } catch (IOException e) {
+                        Toast.makeText(getApplicationContext(), "이미지를 저장하지 못했습니다.", Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    Toast.makeText(getApplicationContext(), "저장소 접근 권한이 없어 사진을 저장할 수 없습니다.", Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
     }
 
     @Override

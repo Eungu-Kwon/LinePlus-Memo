@@ -14,7 +14,6 @@ import java.util.Calendar;
 public class ImageFileManager {
 
     public static boolean copyFile(File file , String save_file){
-        boolean result;
         if(file != null && file.exists()){
             try {
                 FileInputStream fis = new FileInputStream(file);
@@ -28,13 +27,14 @@ public class ImageFileManager {
                 newfos.close();
                 fis.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                return false;
             }
-            result = true;
-        }else{
-            result = false;
+            return true;
         }
-        return result;
+
+        else{
+            return false;
+        }
     }
 
     public static void saveImageFromCache(final Context c) {
