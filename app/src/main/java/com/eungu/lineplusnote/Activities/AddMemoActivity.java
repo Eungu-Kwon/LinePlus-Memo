@@ -128,12 +128,10 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(dbIdx != -1){
             inputEditData();
             isReadOnly = true;
-            getSupportActionBar().setTitle("메모 추가");
         }
         else {
             isReadOnly = false;
             dateTextView.setVisibility(View.GONE);
-            getSupportActionBar().setTitle("상세보기");
         }
 
         isModified = false;
@@ -303,7 +301,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         isReadOnly = false;
         imageListAdapter.setEditingMode(true);
         imageListAdapter.notifyDataSetChanged();
-        getSupportActionBar().setTitle("메모 수정");
+        if(dbIdx != -1) getSupportActionBar().setTitle("메모 수정");
+        else getSupportActionBar().setTitle("메모 추가");
     }
 
     // 메모 추가 & 이미지 제거 관련
