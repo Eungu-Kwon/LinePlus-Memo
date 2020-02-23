@@ -103,14 +103,16 @@ public class ImageCompute {
         int offsetX = 0;
         int offsetY = 0;
 
-        if(width - padding < 0) padding = 0;
+        if(width < 10 || height < 10) {
+            return bmp;
+        }
 
-        if(width > height){
+        if(((height * 4) / 3) < width){
             padding = height / 3;
             offsetX = (width - height - padding) / 2;
             width = height + padding;
         }
-        else if(width < height){
+        else {
             padding = width / 3;
             offsetY = (height - width + padding) / 2;
             height = width - padding;
@@ -118,6 +120,7 @@ public class ImageCompute {
 
         Bitmap croppedBmp = Bitmap.createBitmap(bmp, offsetX, offsetY, width, height);
         bmp.recycle();
+
         return croppedBmp;
     }
 
