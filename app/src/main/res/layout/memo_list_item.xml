@@ -43,6 +43,7 @@
                 android:id="@+id/l_item_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="7dp"
                 android:layout_gravity="center"
                 android:text="XX/XX" />
         </LinearLayout>
@@ -55,7 +56,7 @@
             android:gravity="center_vertical"
             android:singleLine="true"
             android:text="Content"
-            android:textColor="#000000"
+            android:textColor="#d0cece"
             android:textSize="20sp" />
 
     </LinearLayout>
