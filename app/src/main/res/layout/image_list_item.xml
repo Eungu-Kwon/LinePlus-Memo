@@ -9,8 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:layout_margin="10dp"
-        app:srcCompat="@drawable/ic_launcher_foreground" />
+        android:layout_margin="10dp" />
 
     <ImageView
         android:id="@+id/image_list_delete"
