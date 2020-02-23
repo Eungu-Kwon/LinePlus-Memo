@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import java.util.Calendar;
 
@@ -20,6 +19,7 @@ public class DBManager {
         values.put(DBData.MEMO_TITLE, item.getTitle());
         values.put(DBData.MEMO_CONTENT, item.getContent());
         values.put(DBData.MEMO_DATE, item.getTimeToText());
+        values.put(DBData.LAST_MEMO_DATE, item.getLastTimeToText());
         values.put(DBData.MEMO_IMAGES, item.getImageList());
 
         db.insert(DBData.MEMO_TABLE, null, values);
@@ -35,8 +35,9 @@ public class DBManager {
         // When DB doesn't have data : return null
         if(!cursor.move(id)) return null;
 
-        DBData dbData = new DBData(Calendar.getInstance(), cursor.getString(cursor.getColumnIndex(DBData.MEMO_TITLE)), cursor.getString(cursor.getColumnIndex(DBData.MEMO_CONTENT)), cursor.getString(cursor.getColumnIndex(DBData.MEMO_IMAGES)));
+        DBData dbData = new DBData(Calendar.getInstance(), Calendar.getInstance(), cursor.getString(cursor.getColumnIndex(DBData.MEMO_TITLE)), cursor.getString(cursor.getColumnIndex(DBData.MEMO_CONTENT)), cursor.getString(cursor.getColumnIndex(DBData.MEMO_IMAGES)));
         dbData.setTimeFromText(cursor.getString(cursor.getColumnIndex(DBData.MEMO_DATE)));
+        dbData.setLastTimeFromText(cursor.getString(cursor.getColumnIndex(DBData.LAST_MEMO_DATE)));
         db.close();
 
         return dbData;
@@ -48,6 +49,7 @@ public class DBManager {
         values.put(DBData.MEMO_TITLE, item.getTitle());
         values.put(DBData.MEMO_CONTENT, item.getContent());
         values.put(DBData.MEMO_DATE, item.getTimeToText());
+        values.put(DBData.LAST_MEMO_DATE, item.getLastTimeToText());
         values.put(DBData.MEMO_IMAGES, item.getImageList());
 
         int ret = db.update(DBData.MEMO_TABLE, values, "_ID="+(id+1), null);

@@ -19,7 +19,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -145,7 +144,10 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         content_edit.setText(data.getContent());
         imageName = ImageCompute.imageListStringToArray(data.getImageList());
 
-        dateTextView.setText(new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getTime().getTime()));
+        String dateString = "작성일 : " + new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getTime().getTime());
+        if(data.getLastTime() != null && !data.getTime().equals(data.getLastTime())) dateString += "\n" + "수정일 : " + new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getLastTime().getTime());
+
+        dateTextView.setText(dateString);
     }
 
     @Override
@@ -323,13 +325,14 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         imageName.addAll(imageInCacheName);
         imageInCacheName.clear();
 
-        Calendar toSaveCalendar = Calendar.getInstance();
+        Calendar toSaveCalendar = Calendar.getInstance(), lastDate = Calendar.getInstance();
         DBManager dbManager = new DBManager(getApplicationContext());
         if(dbIdx != -1){
             DBData oldData = dbManager.getData(dbIdx);
             toSaveCalendar = oldData.getTime();
+            lastDate = Calendar.getInstance();
         }
-        DBData data = new DBData(toSaveCalendar, title_edit.getText().toString(), content_edit.getText().toString(), ImageCompute.imageListArrayToString(imageName));
+        DBData data = new DBData(toSaveCalendar, lastDate, title_edit.getText().toString(), content_edit.getText().toString(), ImageCompute.imageListArrayToString(imageName));
 
         if(dbIdx == -1) {
             dbIdx = dbManager.getItemsCount();
@@ -339,8 +342,11 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
             dbManager.updateData(data, dbIdx);
         }
 
+        String dateString = "작성일 : " + new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getTime().getTime());
+        if(data.getLastTime() != null && !data.getTime().equals(data.getLastTime())) dateString += "\n" + "수정일 : " + new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getLastTime().getTime());
+
         dateTextView.setVisibility(View.VISIBLE);
-        dateTextView.setText(new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getTime().getTime()));
+        dateTextView.setText(dateString);
         showToast("메모를 저장하였습니다.", Toast.LENGTH_SHORT);
         return;
     }

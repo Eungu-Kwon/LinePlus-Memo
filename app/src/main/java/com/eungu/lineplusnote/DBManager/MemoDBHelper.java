@@ -12,7 +12,7 @@ public class MemoDBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE " + DBData.MEMO_TABLE + "(_ID INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + DBData.MEMO_TITLE + " TEXT, " + DBData.MEMO_CONTENT + " TEXT, " + DBData.MEMO_DATE + " TEXT, " + DBData.MEMO_IMAGES + " TEXT )");
+                + DBData.MEMO_TITLE + " TEXT, " + DBData.MEMO_CONTENT + " TEXT, " + DBData.MEMO_DATE + " TEXT, " + DBData.LAST_MEMO_DATE + " TEXT, " + DBData.MEMO_IMAGES + " TEXT )");
     }
 
     @Override
