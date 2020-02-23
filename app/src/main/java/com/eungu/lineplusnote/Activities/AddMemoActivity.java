@@ -52,18 +52,18 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-public class AddMemoActivity extends AppCompatActivity implements ImageListListener, View.OnClickListener, HandlerListener {
+public class AddMemoActivity extends AppCompatActivity implements ImageListListener, HandlerListener {
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int MY_PERMISSIONS_REQUEST_CAMERA = 123;
     private static final int ADD_IMAGE_FROM_GALLERY = 100;
+
     String imageNameBuffer;
 
     TextView dateTextView = null;
     EditText title_edit = null;
     EditText content_edit = null;
-    Button add_image_button = null;
 
-    MenuItem edit_menu, save_menu;
+    MenuItem editMenu, saveMenu, addImageMenu;
 
     WorkHandler handler;
 
@@ -122,9 +122,6 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         title_edit.addTextChangedListener(watcher);
         content_edit = findViewById(R.id.edit_content);
         content_edit.addTextChangedListener(watcher);
-        add_image_button = findViewById(R.id.edit_add_image);
-
-        add_image_button.setOnClickListener(this);
 
         initImageList();
 
@@ -210,8 +207,9 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.add_appbar_action, menu);
-        edit_menu = menu.findItem(R.id.m_edit_memo);
-        save_menu = menu.findItem(R.id.m_save_memo);
+        editMenu = menu.findItem(R.id.m_edit_memo);
+        saveMenu = menu.findItem(R.id.m_save_memo);
+        addImageMenu = menu.findItem(R.id.m_add_image);
 
         if(dbIdx == -1){        // when adding memo
             changeToWritableMode();
@@ -227,7 +225,6 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         hideKeyboard();
         switch (item.getItemId()) {
             case android.R.id.home:
-
                 onBackPressed();
                 return true;
 
@@ -250,6 +247,10 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                     changeToReadOnlyMode();
                 }
                 return true ;
+
+            case R.id.m_add_image:
+                askToSaveImage();
+                return true;
 
             case R.id.m_delete_memo :
                 DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
@@ -275,11 +276,11 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     //메모 상세보기 <-> 메모 수정
     private void changeToReadOnlyMode(){
         hideKeyboard();
-        edit_menu.setVisible(true);
-        save_menu.setVisible(false);
+        editMenu.setVisible(true);
+        saveMenu.setVisible(false);
+        addImageMenu.setVisible(false);
         title_edit.setFocusable(false);
         content_edit.setFocusable(false);
-        add_image_button.setVisibility(View.GONE);
         isReadOnly = true;
         imageListAdapter.setEditingMode(false);
         imageListAdapter.notifyDataSetChanged();
@@ -296,9 +297,9 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         title_edit.requestFocus();
         imm.showSoftInput(title_edit, InputMethodManager.SHOW_IMPLICIT);
 
-        add_image_button.setVisibility(View.VISIBLE);
-        edit_menu.setVisible(false);
-        save_menu.setVisible(true);
+        editMenu.setVisible(false);
+        saveMenu.setVisible(true);
+        addImageMenu.setVisible(true);
         isReadOnly = false;
         imageListAdapter.setEditingMode(true);
         imageListAdapter.notifyDataSetChanged();
@@ -479,8 +480,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     }
 
     // 이미지 추가버튼 관련
-    @Override
-    public void onClick(View view) {
+    public void askToSaveImage() {
         hideKeyboard();
         final CharSequence[] items =  {"사진 촬영", "갤러리에서 선택", "URL에서 선택"};
         AlertDialog.Builder oDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)

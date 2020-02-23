@@ -7,6 +7,11 @@
         android:icon="@drawable/ic_edit_black_24dp"
         app:showAsAction="always"></item>
     <item
+        android:id="@+id/m_add_image"
+        android:title="image"
+        android:icon="@drawable/ic_image_black_24dp"
+        app:showAsAction="always"></item>
+    <item
         android:id="@+id/m_save_memo"
         android:title="save"
         android:icon="@drawable/ic_save_black_24dp"
