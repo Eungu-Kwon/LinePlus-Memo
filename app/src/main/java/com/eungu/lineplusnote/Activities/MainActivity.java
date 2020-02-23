@@ -50,8 +50,12 @@ public class MainActivity extends AppCompatActivity {
         list = new ArrayList<>();
         listAdapter = new MemoListAdapter(this, list);
 
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+        mLayoutManager.setReverseLayout(true);
+        mLayoutManager.setStackFromEnd(true);
+
         recyclerView = findViewById(R.id.r_memo_list);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setAdapter(listAdapter);
     }
 

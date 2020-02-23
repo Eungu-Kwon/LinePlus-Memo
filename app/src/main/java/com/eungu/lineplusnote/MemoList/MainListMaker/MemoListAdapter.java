@@ -74,7 +74,8 @@ public class MemoListAdapter extends RecyclerView.Adapter<MemoListAdapter.ViewHo
         String content = aData.get(i).getContent();
         String time = aData.get(i).getDate();
 
-        viewHolder.thumbnailImage.setImageBitmap(ImageCompute.getBmpFromPathWithRotate(aData.get(i).getThumbnailPath()));
+        if(aData.get(i).getThumbnailPath() != null) viewHolder.thumbnailImage.setImageBitmap(ImageCompute.getBmpFromPathWithRotate(aData.get(i).getThumbnailPath()));
+        else viewHolder.thumbnailImage.setVisibility(View.GONE);
         viewHolder.text_title.setText(title);
         viewHolder.text_content.setText(content);
         viewHolder.text_date.setText(time);
