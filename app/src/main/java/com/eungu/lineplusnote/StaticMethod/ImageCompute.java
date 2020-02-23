@@ -97,18 +97,23 @@ public class ImageCompute {
     }
 
     public static Bitmap getCroppedImage(Bitmap bmp) {
+        int padding = 10;
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         int offsetX = 0;
         int offsetY = 0;
 
+        if(width - padding < 0) padding = 0;
+
         if(width > height){
-            offsetX = (width - height) / 2;
-            width = height;
+            padding = height / 3;
+            offsetX = (width - height - padding) / 2;
+            width = height + padding;
         }
         else if(width < height){
-            offsetY = (height - width) / 2;
-            height = width;
+            padding = width / 3;
+            offsetY = (height - width + padding) / 2;
+            height = width - padding;
         }
 
         Bitmap croppedBmp = Bitmap.createBitmap(bmp, offsetX, offsetY, width, height);
