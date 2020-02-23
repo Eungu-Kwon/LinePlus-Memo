@@ -53,10 +53,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.r_memo_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(listAdapter);
-
-//        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(getApplicationContext(), DividerItemDecoration.VERTICAL);
-//        dividerItemDecoration.setDrawable(getResources().getDrawable(R.drawable.recyclerview_divider));
-//        recyclerView.addItemDecoration(dividerItemDecoration);
     }
 
     private void setList(){
