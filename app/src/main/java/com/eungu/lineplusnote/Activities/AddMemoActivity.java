@@ -59,8 +59,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     String imageNameBuffer;
 
     TextView dateTextView = null;
-    EditText title_edit = null;
-    EditText content_edit = null;
+    EditText titleEdit = null;
+    EditText contentEdit = null;
 
     MenuItem editMenu, saveMenu, addImageMenu;
 
@@ -117,10 +117,10 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
 
         dateTextView = findViewById(R.id.memo_recent_modified);
 
-        title_edit = findViewById(R.id.edit_title);
-        title_edit.addTextChangedListener(watcher);
-        content_edit = findViewById(R.id.edit_content);
-        content_edit.addTextChangedListener(watcher);
+        titleEdit = findViewById(R.id.edit_title);
+        titleEdit.addTextChangedListener(watcher);
+        contentEdit = findViewById(R.id.edit_content);
+        contentEdit.addTextChangedListener(watcher);
 
         initImageList();
 
@@ -140,8 +140,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         DBManager dbManager = new DBManager(this);
         DBData data = dbManager.getData(dbIdx);
 
-        title_edit.setText(data.getTitle());
-        content_edit.setText(data.getContent());
+        titleEdit.setText(data.getTitle());
+        contentEdit.setText(data.getContent());
         imageName = ImageCompute.imageListStringToArray(data.getImageList());
 
         String dateString = "작성일 : " + new SimpleDateFormat("yyyy.MM.dd HH:mm").format(data.getTime().getTime());
@@ -279,8 +279,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         editMenu.setVisible(true);
         saveMenu.setVisible(false);
         addImageMenu.setVisible(false);
-        title_edit.setFocusable(false);
-        content_edit.setFocusable(false);
+        titleEdit.setFocusable(false);
+        contentEdit.setFocusable(false);
         isReadOnly = true;
         imageListAdapter.setEditingMode(false);
         imageListAdapter.notifyDataSetChanged();
@@ -288,14 +288,14 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     }
 
     private void changeToWritableMode(){
-        title_edit.setFocusableInTouchMode(true);
-        content_edit.setFocusableInTouchMode(true);
-        title_edit.setFocusable(true);
-        content_edit.setFocusable(true);
+        titleEdit.setFocusableInTouchMode(true);
+        contentEdit.setFocusableInTouchMode(true);
+        titleEdit.setFocusable(true);
+        contentEdit.setFocusable(true);
 
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-        title_edit.requestFocus();
-        imm.showSoftInput(title_edit, InputMethodManager.SHOW_IMPLICIT);
+        titleEdit.requestFocus();
+        imm.showSoftInput(titleEdit, InputMethodManager.SHOW_IMPLICIT);
 
         editMenu.setVisible(false);
         saveMenu.setVisible(true);
@@ -309,8 +309,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
 
     // 메모 추가 & 이미지 제거 관련
     private int checkCanSave(){
-        if(title_edit.getText().toString().equals("")) return 1;
-        else if(content_edit.getText().toString().equals("")) return 2;
+        if(titleEdit.getText().toString().equals("")) return 1;
+        else if(contentEdit.getText().toString().equals("")) return 2;
         else return 0;
     }
 
@@ -332,7 +332,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
             toSaveCalendar = oldData.getTime();
             lastDate = Calendar.getInstance();
         }
-        DBData data = new DBData(toSaveCalendar, lastDate, title_edit.getText().toString(), content_edit.getText().toString(), ImageCompute.imageListArrayToString(imageName));
+        DBData data = new DBData(toSaveCalendar, lastDate, titleEdit.getText().toString(), contentEdit.getText().toString(), ImageCompute.imageListArrayToString(imageName));
 
         if(dbIdx == -1) {
             dbIdx = dbManager.getItemsCount();
