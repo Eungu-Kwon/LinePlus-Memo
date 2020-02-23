@@ -22,7 +22,7 @@ public class ImageOpener {
             connection.connect();
 
             String contentType = connection.getHeaderField("Content-Type");
-            if(!contentType.startsWith("image/")) {
+            if(!contentType.startsWith("image/") || contentType.startsWith("image/svg")) {
                 return null;
             }
             InputStream input = connection.getInputStream();
