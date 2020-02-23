@@ -421,7 +421,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         // 메모를 수정중이면 물어보고 결정
         else {
             final CharSequence[] items =  {"저장하고 나가기", "저장하지 않고 나가기", "취소"};
-            AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+            AlertDialog.Builder oDialog = new AlertDialog.Builder(this)
                     .setTitle("메모를 저장하시겠습니까?")
                     .setItems(items, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int pos) {
@@ -470,12 +470,12 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     }
 
     private AlertDialog createDialog(String title, String msg, String posMsg, DialogInterface.OnClickListener positive, String nagMsg, DialogInterface.OnClickListener negative){
-        AlertDialog.Builder oDialog = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
+        AlertDialog.Builder oDialog = new AlertDialog.Builder(this);
         oDialog.setTitle(title)
                 .setMessage(msg)
-                .setPositiveButton(posMsg, positive)
+                .setNegativeButton(posMsg, positive)
                 .setCancelable(false);
-        if(nagMsg != null) oDialog.setNegativeButton(nagMsg, negative);
+        if(nagMsg != null) oDialog.setPositiveButton(nagMsg, negative);
         return oDialog.create();
     }
 
@@ -483,7 +483,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     public void askToSaveImage() {
         hideKeyboard();
         final CharSequence[] items =  {"사진 촬영", "갤러리에서 선택", "URL에서 선택"};
-        AlertDialog.Builder oDialog = new AlertDialog.Builder(AddMemoActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog)
+        AlertDialog.Builder oDialog = new AlertDialog.Builder(AddMemoActivity.this)
                 .setTitle("이미지 불러오기")
                 .setItems(items, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int pos) {
@@ -547,7 +547,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         AlertDialog.Builder urlDialog = new AlertDialog.Builder(AddMemoActivity.this);
         urlDialog.setView(container)
                 .setTitle("URL 입력")
-                .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                .setNegativeButton("확인", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         new Thread(){
@@ -573,7 +573,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                         }.start();
                     }
                 })
-                .setNegativeButton("취소", null);
+                .setPositiveButton("취소", null);
         urlDialog.show();
     }
 

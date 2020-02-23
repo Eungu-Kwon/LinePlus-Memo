@@ -1,13 +1,12 @@
 <resources>
 <!--v23 이상-->
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorBackground</item>
         <item name="colorPrimaryDark">@color/colorBackground</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorAccent">@color/pantonClassicBlue</item>
         <item name="android:windowBackground">@color/colorBackground</item>
-        <item name="android:textColorPrimary">@color/pantonClassicBlue</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
