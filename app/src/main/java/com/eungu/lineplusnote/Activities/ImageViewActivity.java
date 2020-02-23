@@ -9,10 +9,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.view.Menu;
@@ -33,6 +36,7 @@ import com.github.chrisbanes.photoview.PhotoView;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +48,8 @@ public class ImageViewActivity extends AppCompatActivity {
     private File imageFile;
     private boolean isFullmode;
     private Bitmap bmp;
+
+    Handler handler;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -79,6 +85,20 @@ public class ImageViewActivity extends AppCompatActivity {
         pv.setImageDrawable(new BitmapDrawable(this.getResources(), bmp));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        handler = new Handler() {
+            public void handleMessage(Message msg) {
+                Bundle bun = msg.getData();
+                String result = bun.getString("RESULT");
+                String request = bun.getString("REQUEST");
+                if(result == "OK"){
+                    Toast.makeText(getApplicationContext(), "이미지를 저장했습니다.", Toast.LENGTH_LONG).show();
+                }
+                else if(result == "FAIL"){
+                    Toast.makeText(getApplicationContext(), "이미지를 저장하지 못했습니다.", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
     }
 
     private void hideSystemUI() {
@@ -149,17 +169,15 @@ public class ImageViewActivity extends AppCompatActivity {
             }
         }
         else{
-            try {
-                addImageToGallery();
-                Toast.makeText(getApplicationContext(), "이미지를 저장했습니다.", Toast.LENGTH_LONG).show();
-            } catch (IOException e) {
-                Toast.makeText(getApplicationContext(), "이미지를 저장하지 못했습니다.", Toast.LENGTH_LONG).show();
-            }
+            addImageToGallery();
         }
     }
 
     @SuppressWarnings("deprecation")
-    public void addImageToGallery() throws IOException {
+    public void addImageToGallery() {
+        final Bundle bun = new Bundle();
+        bun.putString("REQUEST", "100");
+
         Uri collection;
         ContentValues values = new ContentValues();
         ContentResolver contentResolver = getContentResolver();
@@ -176,16 +194,24 @@ public class ImageViewActivity extends AppCompatActivity {
 
             Uri item = contentResolver.insert(collection, values);
 
-            ParcelFileDescriptor pdf = contentResolver.openFileDescriptor(item, "w", null);
-            if (pdf != null) {
-                InputStream inputStream = new FileInputStream(imageFile);
-                byte[] strToByte = ImageCompute.inputStreamToByteArray(inputStream);
-                FileOutputStream fos = new FileOutputStream(pdf.getFileDescriptor());
-                fos.write(strToByte);
-                fos.close();
-                inputStream.close();
-                pdf.close();
-                contentResolver.update(item, values, null, null);
+            ParcelFileDescriptor pdf = null;
+            try {
+                pdf = contentResolver.openFileDescriptor(item, "w", null);
+                if (pdf != null) {
+                    InputStream inputStream = new FileInputStream(imageFile);
+                    byte[] strToByte = ImageCompute.inputStreamToByteArray(inputStream);
+                    FileOutputStream fos = new FileOutputStream(pdf.getFileDescriptor());
+                    fos.write(strToByte);
+                    fos.close();
+                    inputStream.close();
+                    pdf.close();
+                    contentResolver.update(item, values, null, null);
+                    bun.putString("RESULT", "OK");
+                }
+            } catch (IOException e) {
+                bun.putString("RESULT", "FAIL");
+            } catch (Exception e) {
+                bun.putString("RESULT", "FAIL");
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -193,20 +219,37 @@ public class ImageViewActivity extends AppCompatActivity {
                 values.put(MediaStore.Images.Media.IS_PENDING, 0);
                 contentResolver.update(item, values, null, null);
             }
+
+            Message msg = handler.obtainMessage();
+            msg.setData(bun);
+            handler.sendMessage(msg);
         }
 
         else{
             File saveDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/LineMemo");
-            File saveFile = new File(saveDir, fileName);
+            final File saveFile = new File(saveDir, fileName);
             if (!saveDir.exists()) saveDir.mkdir();
 
-            if(!ImageFileManager.copyFile(imageFile, saveFile.getAbsolutePath())){
-                return;
-            }
+            new Thread(){
+                @Override
+                public void run() {
+                    boolean result = ImageFileManager.copyFile(bmp, saveFile.getAbsolutePath());
+
+                    if(result){
+                        bun.putString("RESULT", "OK");
+                    }
+                    else{
+                        bun.putString("RESULT", "FAIL");
+                    }
+
+                    Message msg = handler.obtainMessage();
+                    msg.setData(bun);
+                    handler.sendMessage(msg);
+                }
+            }.start();
 
             collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             values.put(MediaStore.Images.Media.DATA, saveDir.getAbsolutePath() + "/" + fileName);
-
             contentResolver.insert(collection, values);
         }
     }
@@ -216,12 +259,7 @@ public class ImageViewActivity extends AppCompatActivity {
         switch (requestCode){
             case MY_PERMISSIONS_REQUEST_STORAGE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    try {
-                        addImageToGallery();
-                        Toast.makeText(getApplicationContext(), "이미지를 저장했습니다.", Toast.LENGTH_LONG).show();
-                    } catch (IOException e) {
-                        Toast.makeText(getApplicationContext(), "이미지를 저장하지 못했습니다.", Toast.LENGTH_LONG).show();
-                    }
+                    addImageToGallery();
                 } else {
                     Toast.makeText(getApplicationContext(), "저장소 접근 권한이 없어 사진을 저장할 수 없습니다.", Toast.LENGTH_SHORT).show();
                 }

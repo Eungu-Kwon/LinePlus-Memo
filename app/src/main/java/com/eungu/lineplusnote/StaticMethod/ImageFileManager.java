@@ -2,6 +2,7 @@ package com.eungu.lineplusnote.StaticMethod;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.media.ExifInterface;
 import android.os.Environment;
 
 import java.io.File;
@@ -26,15 +27,30 @@ public class ImageFileManager {
                 }
                 newfos.close();
                 fis.close();
+
             } catch (Exception e) {
                 return false;
             }
+
             return true;
         }
 
         else{
             return false;
         }
+    }
+
+    public static boolean copyFile(Bitmap file , String save_file){
+        try {
+            FileOutputStream newfos = new FileOutputStream(save_file);
+
+            file.compress(Bitmap.CompressFormat.JPEG, 100, newfos);
+            newfos.close();
+
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 
     public static void saveImageFromCache(final Context c) {
