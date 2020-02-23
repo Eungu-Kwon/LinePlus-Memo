@@ -24,15 +24,15 @@ public class DBTest {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         dbManager = new DBManager(appContext);
 
-        dbManager.addData(new DBData(Calendar.getInstance(), "Title1", "Content1", "imageList"));
-        dbManager.addData(new DBData(Calendar.getInstance(), "Title2", "Content2", "imageList"));
+        dbManager.addData(new DBData(Calendar.getInstance(), Calendar.getInstance(),"Title1", "Content1", "imageList"));
+        dbManager.addData(new DBData(Calendar.getInstance(), Calendar.getInstance(),"Title2", "Content2", "imageList"));
     }
 
     // DB 추가 테스트 : DB 숫자가 늘었는지 체크
     @Test
     public void addData1() {
         int countPast = dbManager.getItemsCount();
-        dbManager.addData(new DBData(Calendar.getInstance(), "Title3", "Content3", "imageList"));
+        dbManager.addData(new DBData(Calendar.getInstance(), Calendar.getInstance(),"Title3", "Content3", "imageList"));
         assertEquals(countPast + 1, dbManager.getItemsCount());
     }
 
@@ -43,7 +43,7 @@ public class DBTest {
         String newDataContent = "Content4";
         String newDataImageList = "NewImageList";
         int countPast = dbManager.getItemsCount();
-        dbManager.addData(new DBData(Calendar.getInstance(), newDataName, newDataContent, newDataImageList));
+        dbManager.addData(new DBData(Calendar.getInstance(), Calendar.getInstance(), newDataName, newDataContent, newDataImageList));
         DBData data = dbManager.getData(dbManager.getItemsCount() - 1);
         assertEquals(newDataName + newDataContent + newDataImageList, data.getTitle() + data.getContent() + data.getImageList());
     }
@@ -54,7 +54,7 @@ public class DBTest {
         DBData dbData = dbManager.getData(0);
 
         String title = dbData.getTitle();
-        dbManager.updateData(new DBData(Calendar.getInstance(), "UpdatedTitle", "UpdatedContent", "UpdatedImageList"), 0);
+        dbManager.updateData(new DBData(Calendar.getInstance(), Calendar.getInstance(),"UpdatedTitle", "UpdatedContent", "UpdatedImageList"), 0);
         assertTrue(!title.equals(dbManager.getData(0).getTitle()));
     }
 

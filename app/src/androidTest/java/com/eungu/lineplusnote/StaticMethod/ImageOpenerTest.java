@@ -50,6 +50,13 @@ public class ImageOpenerTest {
         assertTrue(f == null);
     }
 
+    // Bitmap 에 호환되지않는 .svg 파일 예외처리 체크
+    @Test
+    public void openImageUrl5() {
+        f = ImageOpener.openImage(appContext, "https://en.wikipedia.org/wiki/File:Yin_yang.svg");
+        assertTrue(f == null);
+    }
+
     // 만약 이미지를 저장했다면 삭제
     @After
     public void deleteImage() {
