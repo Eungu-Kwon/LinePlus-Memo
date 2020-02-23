@@ -92,12 +92,11 @@ public class ImageCompute {
         Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath(), options);
 
         bmp = getBmpWithRotate(bmp, orientation);
-        bmp = getCroppedImage(bmp);
 
         return bmp;
     }
 
-    private static Bitmap getCroppedImage(Bitmap bmp) {
+    public static Bitmap getCroppedImage(Bitmap bmp) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
         int offsetX = 0;

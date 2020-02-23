@@ -77,7 +77,10 @@ public class ImageFileManager {
         File tempFile = new File(iconFile);
         try {
             FileOutputStream out = new FileOutputStream(tempFile);
+
             Bitmap bmp = ImageCompute.getBmpFromPathWithResize(f.getAbsolutePath(), 200);
+            bmp = ImageCompute.getCroppedImage(bmp);
+
             bmp.compress(Bitmap.CompressFormat.JPEG, 20, out);
             out.close();
             bmp.recycle();
