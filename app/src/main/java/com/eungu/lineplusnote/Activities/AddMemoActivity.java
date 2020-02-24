@@ -82,18 +82,12 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_or_modify_memo);
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-
         ImageFileManager.deleteCache(this);
 
         handler = new WorkHandler(getApplicationContext());
         handler.setListener(this);
 
         initView();
-
-        getSupportActionBar().setElevation(0f);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
 
     @Override
@@ -112,6 +106,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
 
     // 뷰 초기 설정
     private void initView(){
+        // 현재 메모의 index를 불러온다; 새로 만드는 메모일 경우 -1을 반환
         Intent intent = getIntent();
         dbIdx = intent.getExtras().getInt("idx", -1);
 
@@ -122,8 +117,16 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         contentEdit = findViewById(R.id.edit_content);
         contentEdit.addTextChangedListener(watcher);
 
+        // 화면을 세로 고정하고 actionbar 을 커스텀
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        getSupportActionBar().setElevation(0f);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        // 이미지 리스트를 초기화
         initImageList();
 
+        // 메모를 불러온것이면 기존 데이터를 채워넣는다
         if(dbIdx != -1){
             inputEditData();
             isReadOnly = true;
@@ -136,6 +139,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         isModified = false;
     }
 
+    // 기존 메모를 TextView에 채워넣는 메소드; 메모를 새로 만드는 경우에는 호출하지 않는다
     private void inputEditData(){
         DBManager dbManager = new DBManager(this);
         DBData data = dbManager.getData(dbIdx);
@@ -150,6 +154,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         dateTextView.setText(dateString);
     }
 
+    // onResume()가 호출되면 이미지 리스트를 갱신
     @Override
     protected void onResume() {
         super.onResume();
@@ -158,6 +163,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
     }
 
+    // Recycler View 초기화
     private void initImageList(){
         RecyclerView imageList = findViewById(R.id.image_list);
         imageListItems = new ArrayList<>();
@@ -172,6 +178,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         setImageList();
     }
 
+    // Recycler View 갱신
     private void setImageList() {
         imageListItems.clear();
         for(int i = 0; i < imageName.size(); ++i) {
@@ -190,6 +197,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         imageListAdapter.notifyDataSetChanged();
     }
 
+    // 수정중 이미지를 누르면 Dialog를 통해 물어본 후 이미지 삭제
     @Override
     public void onClickedItem(final String path) {
         DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
@@ -203,7 +211,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         createDialog("이미지 삭제", "이미지를 삭제하시겠습니까?", "예", positive, "아니요", null).show();
     }
 
-    // 액션바에 있는 메뉴 설정
+    // 액션바에 있는 메뉴 설정; 메모를 처음 만들경우 WritableMode, 기존 메모를 확인하는 경우 ReadOnlyMoce
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.add_appbar_action, menu);
@@ -220,6 +228,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         return super.onCreateOptionsMenu(menu);
     }
 
+    // 상단 ActionBar의 메뉴의 기능 설정
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         hideKeyboard();
@@ -235,14 +244,17 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
             case R.id.m_save_memo :
                 if(isModified) {
                     if(checkCanSave() == 0){
+                        // 메모가 수정되었고 저장 가능하면 저장 후 ReadOnlyMode
                         saveMemo();
                         changeToReadOnlyMode();
                     }
                     else{
+                        // 저장 불가시 (제목 또는 내용이 비어있을 때)
                         showToast("제목과 내용을 확인해주세요.", Toast.LENGTH_SHORT);
                     }
                 }
                 else {
+                    // 수정되지 않았으면 바로 ReadOnlyMode
                     showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
                     changeToReadOnlyMode();
                 }
@@ -307,24 +319,28 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         else getSupportActionBar().setTitle("메모 추가");
     }
 
-    // 메모 추가 & 이미지 제거 관련
+    // 제목 또는 내용이 비어있으면 저장 불가; 그 외에는 저장가능
     private int checkCanSave(){
         if(titleEdit.getText().toString().equals("")) return 1;
         else if(contentEdit.getText().toString().equals("")) return 2;
         else return 0;
     }
 
+    // 메모를 저장하는 메소드
     private void saveMemo(){
         int canSave = checkCanSave();
         if(canSave != 0){
             return;
         }
+
+        // Cache에 저장된 이미지를 옮긴다
         ImageFileManager.saveImageFromCache(this);
         isModified = false;
         isSaved = true;
         imageName.addAll(imageInCacheName);
         imageInCacheName.clear();
 
+        // DB에 메모를 저장; 작성일 이외의 데이터를 업데이트
         Calendar toSaveCalendar = Calendar.getInstance(), lastDate = Calendar.getInstance();
         DBManager dbManager = new DBManager(getApplicationContext());
         if(dbIdx != -1){
@@ -334,6 +350,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
         DBData data = new DBData(toSaveCalendar, lastDate, titleEdit.getText().toString(), contentEdit.getText().toString(), ImageCompute.imageListArrayToString(imageName));
 
+        // 메모가 처음 만든것이면 DB에 추가; 수정중이면 업데이트
         if(dbIdx == -1) {
             dbIdx = dbManager.getItemsCount();
             dbManager.addData(data);
@@ -351,6 +368,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         return;
     }
 
+    // 이미지 삭제 메소드; path == null 이면 현재 메모내 모든 이미지 제거
     public void deleteImage(String path){
         if(imageName.isEmpty()) return;
 
@@ -382,11 +400,6 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         if(canSave == 1) message = "제목";
         else if (canSave == 2) message = "내용";
 
-        if(isReadOnly){
-            exitActivity();
-            return;
-        }
-
         // 메모 내용이 수정되었을때 저장가능한지 체크하고 저장 / 폐기한다
         if (isModified) {
 
@@ -412,6 +425,16 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         else {
             exitActivity();
         }
+    }
+
+    // 메모가 수정 & 저장 되었는지 체크 후 종료
+    private void exitActivity(){
+        if(isSaved) { setResult(RESULT_OK); }
+        else if (!isSaved && !isReadOnly){
+            showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
+            setResult(RESULT_CANCELED);
+        }
+        finish();
     }
 
     // 메모가 수정되었고 저장가능할 때 호출
@@ -451,16 +474,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
     }
 
-    private void exitActivity(){
-        if(isSaved) { setResult(RESULT_OK); }
-        else if (!isSaved && !isReadOnly){
-            showToast("변경사항이 없어 저장되지 않았습니다.", Toast.LENGTH_SHORT);
-            setResult(RESULT_CANCELED);
-        }
-        finish();
-    }
-
-    // 시스템 관련
+    // 키보드를 내리는 메소드
     private void hideKeyboard(){
         if(getCurrentFocus() != null) {
             InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
@@ -468,12 +482,14 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
     }
 
+    // Toast를 띄우는 메소드
     private void showToast(String str, int duration){
         Toast t = Toast.makeText(getApplicationContext(), str, duration);
         t.setGravity(Gravity.BOTTOM|Gravity.CENTER, 0, t.getYOffset());
         t.show();
     }
 
+    // Dialog를 띄우는 메소드
     private AlertDialog createDialog(String title, String msg, String posMsg, DialogInterface.OnClickListener positive, String nagMsg, DialogInterface.OnClickListener negative){
         AlertDialog.Builder oDialog = new AlertDialog.Builder(this);
         oDialog.setTitle(title)
@@ -512,7 +528,9 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         }
     }
 
+    // 카메라 권한 요청 메소드
     private void callCameraActivity(){
+        // 권한이 없으면 요청
         if (ContextCompat.checkSelfPermission(getApplicationContext(),
                 Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -523,16 +541,19 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                         ActivityCompat.requestPermissions(AddMemoActivity.this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
                     }
                 };
+                // 전에 권한을 거부한 적이 있으면 설명을 띄운다
                 createDialog("권한 요청", "카메라를 이용하기 위해 권한이 필요합니다.", "확인", positive, null, null).show();
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
             }
         }
+        // 권한이 있으면 카메라 호출
         else{
             dispatchTakePictureIntent();
         }
     }
 
+    // 갤러리에서 이미지 선택
     private void addFromGallery() {
         Intent i = new Intent();
         i.setType("image/*");
@@ -540,6 +561,7 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         startActivityForResult(Intent.createChooser(i, "이미지 추가"), ADD_IMAGE_FROM_GALLERY);
     }
 
+    // URL로부터 이미지를 다운로드
     private void downloadAndSetImageFromURL() {
         final EditText editText = new EditText(AddMemoActivity.this);
         final ConstraintLayout container = new ConstraintLayout(AddMemoActivity.this);
@@ -582,6 +604,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
         urlDialog.show();
     }
 
+    // 카메라 권한이 있으면 Intent 호출
+    // 출처 : https://developer.android.com/training/camera/photobasics#java
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
@@ -605,9 +629,12 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        // 갤러리 Intent에서 결과를 받을 때
         if(requestCode == ADD_IMAGE_FROM_GALLERY && resultCode == RESULT_OK){
             Uri uri = data.getData();
             try {
+                // URI에서 이미지와 아이콘을 저장
                 File image = ImageOpener.openImage(this, uri);
                 ImageFileManager.saveImageIcon(getApplicationContext(), image);
                 imageInCacheName.add(image.getName());
@@ -616,6 +643,8 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
                 e.printStackTrace();
             }
         }
+
+        // 카메라 Intent에서 결과를 받을 때
         if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
             if(imageNameBuffer != null && !imageNameBuffer.equals("")) {
                 imageInCacheName.add(imageNameBuffer);
