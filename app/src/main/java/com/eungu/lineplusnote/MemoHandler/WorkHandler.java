@@ -25,6 +25,8 @@ public class WorkHandler extends Handler {
         Bundle bun = msg.getData();
         String result = bun.getString("RESULT");
         String request = bun.getString("REQUEST");
+
+        // From ImageViewActivity
         if(request == HANDLE_IN_SAVE_TO_GALLERY){
             if(result == "OK"){
                 Toast.makeText(c.getApplicationContext(), "이미지를 저장했습니다.", Toast.LENGTH_LONG).show();
@@ -33,7 +35,7 @@ public class WorkHandler extends Handler {
                 Toast.makeText(c.getApplicationContext(), "이미지를 저장하지 못했습니다.", Toast.LENGTH_LONG).show();
             }
         }
-
+        // From AddMemoActivity
         else if(request == HANDLE_IN_SAVE_FROM_URL) {
             listener.messageFromHandler(bun);
         }

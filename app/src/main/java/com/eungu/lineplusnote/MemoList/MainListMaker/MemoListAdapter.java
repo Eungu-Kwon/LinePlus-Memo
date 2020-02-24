@@ -35,11 +35,11 @@ public class MemoListAdapter extends RecyclerView.Adapter<MemoListAdapter.ViewHo
             text_content = itemView.findViewById(R.id.l_item_content);
             text_date = itemView.findViewById(R.id.l_item_date);
 
+            // 리스트 아이템을 터치하면 상세보기 & 수정 가능
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(v.getContext(), AddMemoActivity.class);
-                    intent.putExtra("ADD", false);
                     intent.putExtra("idx", getAdapterPosition());
                     ((Activity)v.getContext()).startActivityForResult(intent, MainActivity.ADD_REQUEST_CODE);
                 }
@@ -74,10 +74,12 @@ public class MemoListAdapter extends RecyclerView.Adapter<MemoListAdapter.ViewHo
         String content = aData.get(i).getContent();
         String time = aData.get(i).getDate();
 
+        // 썸네일이 있으면 이미지를 지정하고 VISIBLE 설정
         if(aData.get(i).getThumbnailPath() != null) {
             viewHolder.thumbnailImage.setImageBitmap(ImageCompute.getBmpFromPathWithRotate(aData.get(i).getThumbnailPath()));
             viewHolder.thumbnailImage.setVisibility(View.VISIBLE);
         }
+        // 썸네일이 없으면 GONE
         else {
             viewHolder.thumbnailImage.setVisibility(View.GONE);
         }

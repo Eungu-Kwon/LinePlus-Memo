@@ -232,7 +232,7 @@ public class ImageViewActivity extends AppCompatActivity  {
             new Thread(){
                 @Override
                 public void run() {
-                    boolean result = ImageFileManager.copyFile(bmp, saveFile.getAbsolutePath());
+                    boolean result = ImageFileManager.saveBitmapToFile(bmp, saveFile.getAbsolutePath());
 
                     if(result){
                         galleryAddPic(saveFile.getAbsolutePath());

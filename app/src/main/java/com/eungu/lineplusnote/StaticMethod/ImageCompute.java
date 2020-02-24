@@ -11,10 +11,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
+// 이미지 관련 계산을 처리하는 스태틱 메소드가 있는 클래스
 public class ImageCompute {
 
     public static final int NO_RESIZE = -1;
 
+    // 지정된 사이즈 이하로 설정가능한 inSampleSize 반환
+    // 출처 : https://developer.android.com/topic/performance/graphics/load-bitmap
     public static int calculateInSampleSize(int imageWidth, int imageHeight, int reqWidth, int reqHeight) {
         int inSampleSize = 1;
 
@@ -34,6 +37,8 @@ public class ImageCompute {
         return inSampleSize;
     }
 
+    // 이미지의 회전값 반환
+    // 출처 : https://snowdeer.github.io/android/2016/02/02/android-image-rotation/
     public static int getOrientationOfImage(String filepath) {
         ExifInterface exif = null;
 
@@ -61,6 +66,7 @@ public class ImageCompute {
         return 0;
     }
 
+    // path에서 이미지를 읽고 회전값만큼 회전시킨 후 Bitmap 이미지를 반환
     public static Bitmap getBmpFromPathWithRotate(String path){
         if(path == null) return null;
 
@@ -74,6 +80,7 @@ public class ImageCompute {
         return rotatedBmp;
     }
 
+    // path에서 이미지를 읽고 회전값만큼 회전시킨 후 Bitmap 이미지를 size만큼 축소시키고 반환 반환
     public static Bitmap getBmpFromPathWithResize(String path, int size){
         if(path == null) return null;
 
@@ -96,6 +103,7 @@ public class ImageCompute {
         return bmp;
     }
 
+    // 이미지 중앙을 3:2 비율로 잘라내는 메소드
     public static Bitmap getCroppedImage(Bitmap bmp) {
         int padding = 10;
         int width = bmp.getWidth();
@@ -124,6 +132,7 @@ public class ImageCompute {
         return croppedBmp;
     }
 
+    // Bitmap 파일과 회전값을 받아 회전된 Bitmap 객체를 반환
     public static Bitmap getBmpWithRotate(Bitmap bmp, int orientation){
         if(orientation > 0) {
             Matrix matrix = new Matrix();
@@ -154,6 +163,7 @@ public class ImageCompute {
         return str;
     }
 
+    // inputstream 을 byte[]로 반환
     public static byte[] inputStreamToByteArray(InputStream is) {
 
         byte[] resBytes = null;

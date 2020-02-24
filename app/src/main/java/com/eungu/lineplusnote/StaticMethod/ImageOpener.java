@@ -11,7 +11,7 @@ import java.net.HttpURLConnection;
 
 public class ImageOpener {
 
-    //open Image from internet
+    // URL 에서 이미지를 다운로드
     public static File openImage(Context c, final String urlString) {
         File file = ImageFileManager.createImageFile(c);
 
@@ -40,6 +40,7 @@ public class ImageOpener {
         return file;
     }
 
+    // 갤러리(Uri)에서 이미지를 저장
     public static File openImage(Context c, Uri uri) throws IOException {
         InputStream inputStream = c.getContentResolver().openInputStream(uri);
         byte[] strToByte = ImageCompute.inputStreamToByteArray(inputStream);

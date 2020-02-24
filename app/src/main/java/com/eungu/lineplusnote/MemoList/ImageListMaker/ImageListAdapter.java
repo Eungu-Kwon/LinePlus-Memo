@@ -32,14 +32,13 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
             iv = itemView.findViewById(R.id.image_list_item);
             imageDeleteView = itemView.findViewById(R.id.image_list_delete);
 
+            // 메모를 수정중일땐 이미지를 누르면 삭제; 그 외에는 Intent 실행
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if(isEditingMode){
-                        if(isEditingMode) {
-                            listener.onClickedItem(aData.get(getAdapterPosition()).getAbsolutePath());
-                            aData.remove(getAdapterPosition());
-                        }
+                        listener.onClickedItem(aData.get(getAdapterPosition()).getAbsolutePath());
+                        aData.remove(getAdapterPosition());
                     }
                     else {
                         Intent i = new Intent(v.getContext(), ImageViewActivity.class);
@@ -72,6 +71,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
         return vh;
     }
 
+    // 메모를 수정중이면 이미지 옆에 X 자 표시
     @Override
     public void onBindViewHolder(@NonNull final ImageListAdapter.ViewHolder viewHolder, int i) {
         viewHolder.iv.setImageBitmap(BitmapFactory.decodeFile(aData.get(i).getAbsolutePath() + "_icon"));

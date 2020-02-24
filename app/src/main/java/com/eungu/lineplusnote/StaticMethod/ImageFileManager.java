@@ -13,6 +13,7 @@ import java.util.Calendar;
 
 public class ImageFileManager {
 
+    // 파일을 복사하는 메소드; 시간이 걸릴 수 있으니 새 Thread에서 하면 좋음
     public static boolean copyFile(File file , String save_file){
         if(file != null && file.exists()){
             try {
@@ -39,7 +40,8 @@ public class ImageFileManager {
         }
     }
 
-    public static boolean copyFile(Bitmap file , String save_file){
+    // 비트맵 객체를 파일로 저장하는 메소드
+    public static boolean saveBitmapToFile(Bitmap file , String save_file){
         try {
             FileOutputStream newfos = new FileOutputStream(save_file);
 
@@ -52,6 +54,7 @@ public class ImageFileManager {
         return true;
     }
 
+    // Cache 에서 필요내용을 Picture 폴더로 저장하는 메소드
     public static void saveImageFromCache(final Context c) {
         new Thread(){
             @Override
@@ -64,6 +67,7 @@ public class ImageFileManager {
         }.start();
     }
 
+    // Cache 파일을 전부 삭제
     public static void deleteCache(Context c){
         File[] files = c.getExternalCacheDir().listFiles();
         for(File f : files){
@@ -71,6 +75,7 @@ public class ImageFileManager {
         }
     }
 
+    // 썸네일 & 이미지 리스트 아이템으로 쓰일 ICON 파일 생성
     public static void saveImageIcon(Context c, File f){
         String iconFile;
         iconFile = c.getExternalCacheDir().getAbsolutePath() + "/" + f.getName() + "_icon";
@@ -89,6 +94,7 @@ public class ImageFileManager {
         }
     }
 
+    // 캐시에서 파일을 만들고 반환
     public static File createImageFile(Context c) {
         // Create an image file name
         String timeStamp = getTimeStamp();
