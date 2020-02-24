@@ -154,11 +154,12 @@ public class ImageViewActivity extends AppCompatActivity  {
                         ActivityCompat.requestPermissions(ImageViewActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_STORAGE);
                     }
                 };
-                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext())
+                AlertDialog.Builder builder = new AlertDialog.Builder(ImageViewActivity.this)
                         .setTitle("권한 요청")
                         .setMessage("갤러리에 이미지를 저장하기 위해\n" +
                                 "저장소 접근 권한이 필요합니다.")
                         .setPositiveButton("확인", positive);
+                builder.show();
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_STORAGE);
             }
