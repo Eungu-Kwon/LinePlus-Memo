@@ -198,17 +198,21 @@ public class AddMemoActivity extends AppCompatActivity implements ImageListListe
     }
 
     // 수정중 이미지를 누르면 Dialog를 통해 물어본 후 이미지 삭제
+    // 이미지 삭제 후엔 바로 저장
     @Override
-    public void onClickedItem(final String path) {
+    public void onClickedItem(final File file) {
         DialogInterface.OnClickListener positive = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                deleteImage(path);
+                imageName.addAll(imageInCacheName);
+                imageInCacheName.clear();
+                imageName.remove(file.getName());
+                deleteImage(file.getAbsolutePath());
+                saveMemo();
                 imageListAdapter.notifyDataSetChanged();
-                isModified = true;
             }
         };
-        createDialog("이미지 삭제", "이미지를 삭제하시겠습니까?", "예", positive, "아니요", null).show();
+        createDialog("이미지 삭제", "이미지를 삭제하시겠습니까?\n이미지 삭제시 메모가 자동저장됩니다.", "예", positive, "아니요", null).show();
     }
 
     // 액션바에 있는 메뉴 설정; 메모를 처음 만들경우 WritableMode, 기존 메모를 확인하는 경우 ReadOnlyMoce

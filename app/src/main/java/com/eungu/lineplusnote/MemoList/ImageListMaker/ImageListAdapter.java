@@ -37,7 +37,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<ImageListAdapter.View
                 @Override
                 public void onClick(View v) {
                     if(isEditingMode){
-                        listener.onClickedItem(aData.get(getAdapterPosition()).getAbsolutePath());
+                        listener.onClickedItem(aData.get(getAdapterPosition()));
                         aData.remove(getAdapterPosition());
                     }
                     else {
