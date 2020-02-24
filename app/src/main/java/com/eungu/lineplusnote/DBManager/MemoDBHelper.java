@@ -17,7 +17,7 @@ public class MemoDBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS ALARM_TABLE");
+        db.execSQL("DROP TABLE IF EXISTS " + DBData.MEMO_TABLE);
         onCreate(db);
     }
 }
