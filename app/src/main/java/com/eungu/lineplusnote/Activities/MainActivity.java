@@ -31,16 +31,19 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<MemoListItem> list;
     MemoListAdapter listAdapter;
     RecyclerView recyclerView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // 화면 세로 고정
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         getSupportActionBar().setElevation(0f);
         getSupportActionBar().setTitle("라인 메모");
 
+        // 메모 리스트를 초기화
         init_list();
         setList();
 
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         list = new ArrayList<>();
         listAdapter = new MemoListAdapter(this, list);
 
+        // 순서를 역순으로 설정 (최근 메모가 위)
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         mLayoutManager.setReverseLayout(true);
         mLayoutManager.setStackFromEnd(true);
@@ -59,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(listAdapter);
     }
 
+    // 메모의 DB를 불러와 갱신
     private void setList(){
         final DBManager dbManager = new DBManager(this);
         list.clear();
@@ -71,13 +76,16 @@ public class MainActivity extends AppCompatActivity {
             item.setTitle(dbData.getTitle());
             item.setContent(dbData.getContent());
 
+            // 작성날짜가 당일이면 시간을 보여준다
             if(isMemoDateIsToday(dbData.getTime())){
                 item.setDate(new SimpleDateFormat("HH:mm").format(dbData.getTime().getTime()));
             }
+            // 다른날이면 날짜를 보여준다
             else{
                 item.setDate(new SimpleDateFormat("MM/dd").format(dbData.getTime().getTime()));
             }
 
+            // 메모에 이미지가 첨부되어있으면 썸네일 설정
             if(imageList.size() > 0) item.setthumbnailPath(getExternalFilesDir(Environment.DIRECTORY_PICTURES) + "/" + imageList.get(0) + "_icon");
 
             list.add(item);
@@ -96,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // 결과값이 RESULT_OK이면 리스트 갱신
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
