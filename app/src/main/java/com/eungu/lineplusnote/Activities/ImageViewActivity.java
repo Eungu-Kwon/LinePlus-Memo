@@ -55,9 +55,11 @@ public class ImageViewActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.image_view_layout);
 
+        // 파일 path을 전달받는다.
         Intent intent = getIntent();
         fileName = intent.getExtras().getString("path", "");
 
+        // 전체모드 활성화
         isFullmode = true;
         hideSystemUI();
 
@@ -79,6 +81,7 @@ public class ImageViewActivity extends AppCompatActivity  {
 
         imageFile = new File(fileName);
 
+        // Bitmap 객체를 전달받고 Set
         bmp = ImageCompute.getBmpFromPathWithRotate(imageFile.getAbsolutePath());
 
         pv.setImageDrawable(new BitmapDrawable(this.getResources(), bmp));
@@ -139,6 +142,7 @@ public class ImageViewActivity extends AppCompatActivity  {
         return super.onOptionsItemSelected(item);
     }
 
+    // 저장소 접근 권한 체크 (Android P 이하)
     public void checkPermissionAndSave(){
         if (ContextCompat.checkSelfPermission(getApplicationContext(),
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -152,7 +156,8 @@ public class ImageViewActivity extends AppCompatActivity  {
                 };
                 AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext())
                         .setTitle("권한 요청")
-                        .setMessage("카메라를 이용하기 위해 권한이 필요합니다.")
+                        .setMessage("갤러리에 이미지를 저장하기 위해\n" +
+                                "저장소 접근 권한이 필요합니다.")
                         .setPositiveButton("확인", positive);
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_STORAGE);
@@ -163,6 +168,9 @@ public class ImageViewActivity extends AppCompatActivity  {
         }
     }
 
+    // 사진을 저장하는 메소드
+    // Android P 이하에서는 Picture 내 하위폴더에 저장하기 위해 Deprecated 된 API 이용 (버전 Handle 필수)
+    // Android Q 이상은 MediaStore.Images.Media.RELATIVE_PATH 이용가능 (저장소 접근권한 불필요)
     @SuppressWarnings("deprecation")
     public void addImageToGallery() {
         final Bundle bun = new Bundle();
@@ -177,6 +185,7 @@ public class ImageViewActivity extends AppCompatActivity  {
         values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
 
+        // Android Q 이상일때
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             values.put(MediaStore.Images.Media.IS_PENDING, 1);
             values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LineMemo");
@@ -204,17 +213,17 @@ public class ImageViewActivity extends AppCompatActivity  {
                 bun.putString("RESULT", "FAIL");
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                values.clear();
-                values.put(MediaStore.Images.Media.IS_PENDING, 0);
-                contentResolver.update(item, values, null, null);
-            }
+            values.clear();
+            values.put(MediaStore.Images.Media.IS_PENDING, 0);
+            contentResolver.update(item, values, null, null);
 
             Message msg = handler.obtainMessage();
             msg.setData(bun);
             handler.sendMessage(msg);
         }
 
+        // Android P 이하일 때
+        // 파일이 크면 시간이 걸릴 수 있으니 다른 Thread 에서 실행
         else{
             File saveDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/LineMemo");
             final File saveFile = new File(saveDir, fileName);
@@ -245,6 +254,8 @@ public class ImageViewActivity extends AppCompatActivity  {
         }
     }
 
+    // 사진을 갤러리에 추가하는 메소드
+    // 시간이 지나면 자동으로 추가되지만 직접 추가
     private void galleryAddPic(String currentPhotoPath) {
         Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
         File f = new File(currentPhotoPath);
@@ -266,6 +277,8 @@ public class ImageViewActivity extends AppCompatActivity  {
         }
     }
 
+    // Bitmap 객체는 크기때문에 OOM (Out Of Memory)를 일으킬 수 있음
+    // recycle()로 release
     @Override
     protected void onDestroy() {
         super.onDestroy();
