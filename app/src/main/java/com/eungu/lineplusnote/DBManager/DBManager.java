@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 
 import java.util.Calendar;
 
+// 제작 과정에서 편의를 위한 DBManager
+// DB의 추가, 제거, 업데이트를 수행
 public class DBManager {
     MemoDBHelper dbHelper = null;
     public DBManager(Context context) {
@@ -58,7 +60,7 @@ public class DBManager {
         return ret;
     }
 
-    // sort index
+    // DB데이터의 중간 Row를 제거됐을때 _id 값을 갱신
     public void computeID(SQLiteDatabase db){
         Cursor cursor = db.rawQuery("SELECT * FROM " + DBData.MEMO_TABLE, null);
 
