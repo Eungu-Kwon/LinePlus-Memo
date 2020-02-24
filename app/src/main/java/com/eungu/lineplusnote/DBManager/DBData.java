@@ -14,7 +14,7 @@ public class DBData implements Serializable {
     public static final String LAST_MEMO_DATE = "LAST_MEMO_DATE";
     public static final String MEMO_IMAGES = "MEMO_IMAGES";
 
-    private final static String DATE_PAT = "yyyy-MM-dd HH:mm:ss";
+    public final static String DATE_PAT = "yyyy-MM-dd HH:mm:ss";
 
     Calendar time, lastTime;
     String title, content;
